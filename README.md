@@ -1,2 +1,3 @@
 # gotz
-CLI timezone info
+
+A simple timezone info CLI tool.
