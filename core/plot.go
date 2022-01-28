@@ -50,11 +50,17 @@ func (c Config) PlotTime() error {
 		timezones[i+1] = loc
 		descriptions[i+1] = tz.Name
 	}
+	descriptionLength := MaxStringLength(descriptions)
 
 	// Plot all timezones
 	for i := range timezones {
 		// Print header
-		fmt.Printf("%s: %s (%s)\n", descriptions[i], FormatTime(t.In(timezones[i])), FormatDay(t.In(timezones[i])))
+		desc := fmt.Sprintf("%-*s", descriptionLength, descriptions[i])
+		desc = fmt.Sprintf("%s: %s %s", desc, FormatDay(t.In(timezones[i])), FormatTime(t.In(timezones[i])))
+		if len(desc)-1 < nowSlot {
+			desc = desc + strings.Repeat(" ", nowSlot-len(desc)) + "|"
+		}
+		fmt.Println(desc)
 		for j := 0; j < width; j++ {
 			// Convert to tz time
 			tzTime := timeSlots[j].Time.In(timezones[i])
@@ -71,6 +77,16 @@ func (c Config) PlotTime() error {
 	return nil
 }
 
+func MaxStringLength(s []string) int {
+	length := 0
+	for _, str := range s {
+		if len(str) > length {
+			length = len(str)
+		}
+	}
+	return length
+}
+
 func FormatTime(t time.Time) string {
 	return t.Format("15:04:05")
 }
@@ -82,7 +98,7 @@ func FormatDay(t time.Time) string {
 // GetTerminalWidth returns the width of the terminal.
 func GetTerminalWidth() int {
 	width, _, err := term.GetSize(0)
-	if err != nil {
+	if err != nil || width < 24 {
 		return 80
 	}
 	return width
