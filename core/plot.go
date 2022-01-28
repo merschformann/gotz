@@ -35,6 +35,7 @@ func (c Config) PlotTime() error {
 			Time: slotTime,
 		}
 	}
+
 	// Prepare timezones to plot
 	timezones := make([]*time.Location, len(c.Timezones)+1)
 	descriptions := make([]string, len(c.Timezones)+1)
@@ -73,6 +74,27 @@ func (c Config) PlotTime() error {
 		}
 		fmt.Println()
 	}
+
+	// Prepare tics
+	tics := make([]string, width)
+	currentHour := timeSlots[0].Time.Hour()
+	for i := 0; i < width; i++ {
+		hour := timeSlots[i].Time.Hour()
+		if hour%3 == 0 && hour != currentHour {
+			tics[i] = fmt.Sprint(hour)
+			currentHour = hour
+		}
+	}
+	// Print tics
+	for i := 0; i < width; i++ {
+		if tics[i] != "" {
+			fmt.Print(tics[i])
+			i += len(tics[i]) - 1
+		} else {
+			fmt.Print(" ")
+		}
+	}
+	fmt.Println()
 
 	return nil
 }
