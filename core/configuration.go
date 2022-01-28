@@ -50,22 +50,28 @@ func DefaultConfigFile() string {
 func Load() (Config, error) {
 	// If no configuration file exists, create one
 	if _, err := os.Stat(DefaultConfigFile()); os.IsNotExist(err) {
-		c := Default()
-		c.Save()
-		return c, nil
+		return SaveDefault()
 	}
 	// Read configuration file
 	var config Config
 	data, err := ioutil.ReadFile(DefaultConfigFile())
 	if err != nil {
-		return config, err
+		fmt.Println("Error reading config file (replacing with default config):", err)
+		return SaveDefault()
 	}
 	// Unmarshal
 	err = json.Unmarshal(data, &config)
 	if err != nil {
-		return config, err
+		fmt.Println("Error unmarshaling config file (replacing with default config):", err)
+		return SaveDefault()
 	}
 	return config, nil
+}
+
+// SaveDefault creates a default config and immediately saves it.
+func SaveDefault() (Config, error) {
+	c := Default()
+	return c, c.Save()
 }
 
 // Save configuration to file.
