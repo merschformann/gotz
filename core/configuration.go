@@ -9,14 +9,22 @@ import (
 	"time"
 )
 
+// Config is the configuration struct.
 type Config struct {
 	// All timezones to display
-	Timezones []Location
+	Timezones []Location `json:"timezones"`
+	// Indicates whether to plot markers on the time axis
+	Markers bool `json:"tics"`
+	// Indicates whether to stretch across the terminal width at cost of accuracy
+	Stretch bool `json:"stretch"`
 }
 
+// Location describes a timezone the user wants to display.
 type Location struct {
+	// Descriptive name of the timezone
 	Name string
-	TZ   string
+	// Machine-readable timezone name
+	TZ string
 }
 
 // Default configuration generator.
@@ -34,6 +42,8 @@ func Default() Config {
 	// Return default configuration
 	return Config{
 		Timezones: tzs,
+		Markers:   true,
+		Stretch:   true,
 	}
 }
 

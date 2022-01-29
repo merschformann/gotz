@@ -17,6 +17,9 @@ func (c Config) PlotTime() error {
 	hours := 24
 	// Get terminal width
 	width := GetTerminalWidth()
+	if !c.Stretch {
+		width = width / 24 * 24
+	}
 	// Get current time
 	t := time.Now()
 	// Determine time slot basics
@@ -75,6 +78,13 @@ func (c Config) PlotTime() error {
 		fmt.Println()
 	}
 
+	// Print markers
+	PrintMarkers(timeSlots, width)
+
+	return nil
+}
+
+func PrintMarkers(timeSlots []Timeslot, width int) {
 	// Prepare tics
 	tics := make([]string, width)
 	currentHour := timeSlots[0].Time.Hour()
@@ -85,6 +95,15 @@ func (c Config) PlotTime() error {
 			currentHour = hour
 		}
 	}
+	// Print markers
+	for i := 0; i < width; i++ {
+		if tics[i] != "" {
+			fmt.Print("^")
+		} else {
+			fmt.Print(" ")
+		}
+	}
+	fmt.Println()
 	// Print tics
 	for i := 0; i < width; i++ {
 		if tics[i] != "" {
@@ -95,8 +114,6 @@ func (c Config) PlotTime() error {
 		}
 	}
 	fmt.Println()
-
-	return nil
 }
 
 func MaxStringLength(s []string) int {
@@ -121,7 +138,7 @@ func FormatDay(t time.Time) string {
 func GetTerminalWidth() int {
 	width, _, err := term.GetSize(0)
 	if err != nil || width < 24 {
-		return 80
+		return 72
 	}
 	return width
 }
