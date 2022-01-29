@@ -19,8 +19,14 @@ func main() {
 		fmt.Println("Error handling configuration:", err)
 		os.Exit(1)
 	}
+	// Parse flags
+	config, request, err := core.ParseFlags(config)
+	if err != nil {
+		fmt.Println("Error parsing flags:", err)
+		os.Exit(1)
+	}
 	// Plot time
-	err = config.PlotTime()
+	err = config.PlotTime(request)
 	if err != nil {
 		fmt.Println("Error plotting time:", err)
 		os.Exit(1)

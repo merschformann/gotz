@@ -11,12 +11,16 @@ import (
 
 // Config is the configuration struct.
 type Config struct {
+	// Symbol mode
+	Symbols string `json:"symbols"`
 	// All timezones to display
 	Timezones []Location `json:"timezones"`
 	// Indicates whether to plot markers on the time axis
 	Markers bool `json:"tics"`
 	// Indicates whether to stretch across the terminal width at cost of accuracy
 	Stretch bool `json:"stretch"`
+	// Indicates whether to colorize the symbols
+	Colorize bool `json:"colorize"`
 }
 
 // Location describes a timezone the user wants to display.
@@ -27,8 +31,8 @@ type Location struct {
 	TZ string
 }
 
-// Default configuration generator.
-func Default() Config {
+// DefaultConfig configuration generator.
+func DefaultConfig() Config {
 	tzs := []Location{}
 	// Add some default locations
 	ny, _ := time.LoadLocation("America/New_York")
@@ -47,8 +51,8 @@ func Default() Config {
 	}
 }
 
-// DefaultConfigFile is the path of the default configuration file.
-func DefaultConfigFile() string {
+// defaultConfigFile is the path of the default configuration file.
+func defaultConfigFile() string {
 	home, err := os.UserHomeDir()
 	if err != nil {
 		panic(fmt.Sprintf("Could not get user home directory: %s", err))
@@ -59,28 +63,30 @@ func DefaultConfigFile() string {
 // Load configuration from file.
 func Load() (Config, error) {
 	// If no configuration file exists, create one
-	if _, err := os.Stat(DefaultConfigFile()); os.IsNotExist(err) {
-		return SaveDefault()
+	if _, err := os.Stat(defaultConfigFile()); os.IsNotExist(err) {
+		return saveDefault()
 	}
 	// Read configuration file
 	var config Config
-	data, err := ioutil.ReadFile(DefaultConfigFile())
+	data, err := ioutil.ReadFile(defaultConfigFile())
 	if err != nil {
 		fmt.Println("Error reading config file (replacing with default config):", err)
-		return SaveDefault()
+		return saveDefault()
 	}
 	// Unmarshal
 	err = json.Unmarshal(data, &config)
 	if err != nil {
 		fmt.Println("Error unmarshaling config file (replacing with default config):", err)
-		return SaveDefault()
+		return saveDefault()
 	}
+	// Validate (replace invalid values with defaults)
+	config = config.validate()
 	return config, nil
 }
 
-// SaveDefault creates a default config and immediately saves it.
-func SaveDefault() (Config, error) {
-	c := Default()
+// saveDefault creates a default config and immediately saves it.
+func saveDefault() (Config, error) {
+	c := DefaultConfig()
 	return c, c.Save()
 }
 
@@ -92,9 +98,18 @@ func (c *Config) Save() error {
 		return err
 	}
 	// Write file
-	err = ioutil.WriteFile(DefaultConfigFile(), data, 0644)
+	err = ioutil.WriteFile(defaultConfigFile(), data, 0644)
 	if err != nil {
 		return err
 	}
 	return nil
+}
+
+// validate validates the configuration.
+func (c Config) validate() Config {
+	if c.Symbols != SymbolModeRectangles && c.Symbols != SymbolModeClocks && c.Symbols != SymbolModeSunMoon {
+		fmt.Printf("Warning - invalid symbols (using default): %s\n", c.Symbols)
+		c.Symbols = SymbolModeDefault
+	}
+	return c
 }

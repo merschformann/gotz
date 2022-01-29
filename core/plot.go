@@ -8,33 +8,36 @@ import (
 	"golang.org/x/term"
 )
 
-type Timeslot struct {
+type timeslot struct {
 	Time time.Time
 }
 
-func (c Config) PlotTime() error {
+func (c Config) PlotTime(request Request) error {
 	// Set hours to plot
 	hours := 24
 	// Get terminal width
-	width := GetTerminalWidth()
+	width := getTerminalWidth()
 	if !c.Stretch {
 		width = width / 24 * 24
 	}
 	// Get current time
-	t := time.Now()
+	if request.Time == nil {
+		t := time.Now()
+		request.Time = &t
+	}
 	// Determine time slot basics
-	timeSlots := make([]Timeslot, width)
+	timeSlots := make([]timeslot, width)
 	nowSlot := width / 2
 	slotMinutes := hours * 60 / width
 	offsetMinutes := slotMinutes * width / 2
 	// Print header
-	fmt.Println(strings.Repeat(" ", nowSlot-4) + "now v " + t.Format("15:04:05"))
+	fmt.Println(strings.Repeat(" ", nowSlot-4) + "now v " + request.Time.Format("15:04:05"))
 	// Prepare slots
 	for i := 0; i < width; i++ {
 		// Get time of slot
-		slotTime := t.Add(time.Duration(i*slotMinutes-offsetMinutes) * time.Minute)
+		slotTime := request.Time.Add(time.Duration(i*slotMinutes-offsetMinutes) * time.Minute)
 		// Store timeslot info
-		timeSlots[i] = Timeslot{
+		timeSlots[i] = timeslot{
 			Time: slotTime,
 		}
 	}
@@ -54,13 +57,17 @@ func (c Config) PlotTime() error {
 		timezones[i+1] = loc
 		descriptions[i+1] = tz.Name
 	}
-	descriptionLength := MaxStringLength(descriptions)
+	descriptionLength := maxStringLength(descriptions)
 
 	// Plot all timezones
 	for i := range timezones {
 		// Print header
 		desc := fmt.Sprintf("%-*s", descriptionLength, descriptions[i])
-		desc = fmt.Sprintf("%s: %s %s", desc, FormatDay(t.In(timezones[i])), FormatTime(t.In(timezones[i])))
+		desc = fmt.Sprintf(
+			"%s: %s %s",
+			desc,
+			formatDay((*request.Time).In(timezones[i])),
+			formatTime((*request.Time).In(timezones[i])))
 		if len(desc)-1 < nowSlot {
 			desc = desc + strings.Repeat(" ", nowSlot-len(desc)) + "|"
 		}
@@ -69,7 +76,7 @@ func (c Config) PlotTime() error {
 			// Convert to tz time
 			tzTime := timeSlots[j].Time.In(timezones[i])
 			// Get symbol of slot
-			symbol := GetHourSymbol(tzTime.Hour())
+			symbol := GetHourSymbol(c.Symbols, c.Colorize, tzTime.Hour())
 			if j == nowSlot {
 				symbol = "|"
 			}
@@ -79,12 +86,12 @@ func (c Config) PlotTime() error {
 	}
 
 	// Print markers
-	PrintMarkers(timeSlots, width)
+	printMarkers(timeSlots, width)
 
 	return nil
 }
 
-func PrintMarkers(timeSlots []Timeslot, width int) {
+func printMarkers(timeSlots []timeslot, width int) {
 	// Prepare tics
 	tics := make([]string, width)
 	currentHour := timeSlots[0].Time.Hour()
@@ -116,7 +123,7 @@ func PrintMarkers(timeSlots []Timeslot, width int) {
 	fmt.Println()
 }
 
-func MaxStringLength(s []string) int {
+func maxStringLength(s []string) int {
 	length := 0
 	for _, str := range s {
 		if len(str) > length {
@@ -126,31 +133,19 @@ func MaxStringLength(s []string) int {
 	return length
 }
 
-func FormatTime(t time.Time) string {
+func formatTime(t time.Time) string {
 	return t.Format("15:04:05")
 }
 
-func FormatDay(t time.Time) string {
+func formatDay(t time.Time) string {
 	return t.Format("Mon 02 Jan 2006")
 }
 
-// GetTerminalWidth returns the width of the terminal.
-func GetTerminalWidth() int {
+// getTerminalWidth returns the width of the terminal.
+func getTerminalWidth() int {
 	width, _, err := term.GetSize(0)
 	if err != nil || width < 24 {
 		return 72
 	}
 	return width
-}
-
-// GetHourSymbol returns a symbol representing the hour in a day.
-func GetHourSymbol(hour int) string {
-	switch {
-	case hour >= 6 && hour < 12:
-		return "☀"
-	case hour >= 12 && hour < 18:
-		return "☼"
-	default:
-		return "☾"
-	}
 }
