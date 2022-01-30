@@ -185,24 +185,40 @@ func checkTimezoneLocation(timezone string) bool {
 	return err == nil
 }
 
+// InputTimeFormat defines accepted time formats.
+type InputTimeFormat struct {
+	// The format string.
+	Format string
+	// Indicates whether the input declared a date too.
+	Date bool
+	// Indicates whether the input declared a timezone too.
+	TZInfo bool
+}
+
 // parseTime parses a time string.
 func parseTime(t string) (time.Time, error) {
 	// Try all supported formats
-	for _, format := range []string{
-		"15",
-		"15:04",
-		"15:04:05",
-		"3:04pm",
-		"3:04:05pm",
-		"3pm",
-		"1504",
-		"150405",
-		"2006-01-02T15:04:05",
-		"2006-01-02T15:04:05Z07:00",
+	for _, format := range []InputTimeFormat{
+		{"15", false, false},
+		{"15:04", false, false},
+		{"15:04:05", false, false},
+		{"3:04pm", false, false},
+		{"3:04:05pm", false, false},
+		{"3pm", false, false},
+		{"1504", false, false},
+		{"150405", false, false},
+		{"2006-01-02T15:04:05", true, false},
+		{"2006-01-02T15:04:05Z07:00", true, true},
 	} {
-		if t, err := time.Parse(format, t); err == nil {
+		if t, err := time.Parse(format.Format, t); err == nil {
 			n := time.Now()
-			t = time.Date(n.Year(), n.Month(), n.Day(), t.Hour(), t.Minute(), t.Second(), 0, time.Local)
+			if !format.TZInfo {
+				if format.Date {
+					t = time.Date(t.Year(), t.Month(), t.Day(), t.Hour(), t.Minute(), t.Second(), 0, time.Local)
+				} else {
+					t = time.Date(n.Year(), n.Month(), n.Day(), t.Hour(), t.Minute(), t.Second(), 0, time.Local)
+				}
+			}
 			return t, nil
 		}
 	}
