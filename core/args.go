@@ -198,6 +198,7 @@ func parseTime(t string) (time.Time, error) {
 		"1504",
 		"150405",
 		"2006-01-02T15:04:05",
+		"2006-01-02T15:04:05Z07:00",
 	} {
 		if t, err := time.Parse(format, t); err == nil {
 			n := time.Now()
