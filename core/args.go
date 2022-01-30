@@ -125,6 +125,22 @@ func ParseFlags(startConfig Config) (Config, Request, bool, error) {
 		request.Time = &t
 	}
 
+	// Handle last argument as time, if it starts with a digit
+	if flag.NArg() > 0 {
+		// Get last argument
+		lastArg := flag.Arg(flag.NArg() - 1)
+		// If last argument is a time, parse it
+		if len(lastArg) > 0 && lastArg[0] >= '0' && lastArg[0] <= '9' {
+			// Parse time
+			changed = true
+			t, err := parseTime(lastArg)
+			if err != nil {
+				return startConfig, Request{}, changed, err
+			}
+			request.Time = &t
+		}
+	}
+
 	return startConfig, request, changed, nil
 }
 
