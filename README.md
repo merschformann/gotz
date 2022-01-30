@@ -7,7 +7,7 @@ A simple CLI timezone info tool.
 ## Installation (requires [Go](https://go.dev/doc/install))
 
 ```bash
-go install github.com/gotz/gotz
+go install github.com/merschformann/gotz@latest
 ```
 
 ## Usage
