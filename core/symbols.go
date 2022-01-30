@@ -100,7 +100,7 @@ func GetHourSymbol(mode string, seg DaySegmentation, color bool, hour int) strin
 	case SymbolModeSunMoon:
 		s = SunMoonSymbols[getDaySegment(seg, hour)]
 	case SymbolModeClocks:
-		s = ClockSymbols[hour]
+		s = ClockSymbols[hour%12]
 	case SymbolModeMono:
 		s = "#"
 	default:
