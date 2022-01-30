@@ -21,7 +21,9 @@ func (c Config) PlotTime(request Request) error {
 		width = width / 24 * 24
 	}
 	// Get current time
+	requestedTime := true
 	if request.Time == nil {
+		requestedTime = false
 		t := time.Now()
 		request.Time = &t
 	}
@@ -31,7 +33,11 @@ func (c Config) PlotTime(request Request) error {
 	slotMinutes := hours * 60 / width
 	offsetMinutes := slotMinutes * width / 2
 	// Print header
-	fmt.Println(strings.Repeat(" ", nowSlot-4) + "now v " + request.Time.Format("15:04:05"))
+	nowDescription := "now"
+	if requestedTime {
+		nowDescription = "time"
+	}
+	fmt.Println(strings.Repeat(" ", nowSlot-(len(nowDescription)+1)) + nowDescription + " v " + request.Time.Format("15:04:05"))
 	// Prepare slots
 	for i := 0; i < width; i++ {
 		// Get time of slot

@@ -23,10 +23,18 @@ func main() {
 		os.Exit(1)
 	}
 	// Parse flags
-	config, request, err := core.ParseFlags(config)
+	config, request, changed, err := core.ParseFlags(config)
 	if err != nil {
 		fmt.Println("Error parsing flags:", err)
 		os.Exit(1)
+	}
+	// Update config, if necessary
+	if changed {
+		err = config.Save()
+		if err != nil {
+			fmt.Println("Error saving configuration update:", err)
+			os.Exit(1)
+		}
 	}
 	// Plot time
 	err = config.PlotTime(request)

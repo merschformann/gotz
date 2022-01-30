@@ -14,7 +14,9 @@ type Request struct {
 }
 
 // parseArgs parses the command line arguments and applies them to the given configuration.
-func ParseFlags(startConfig Config) (Config, Request, error) {
+func ParseFlags(startConfig Config) (Config, Request, bool, error) {
+	// Check for any changes
+	var changed bool
 	// Define configuration flags
 	var symbols, timezones, markers, stretch, colorize string
 	flag.StringVar(
@@ -66,55 +68,71 @@ func ParseFlags(startConfig Config) (Config, Request, error) {
 
 	// Handle configuration
 	if symbols != "" {
+		changed = true
 		startConfig.Symbols = symbols
+		if !checkSymbolMode(startConfig.Symbols) {
+			return startConfig, Request{}, false, fmt.Errorf("invalid symbol mode: %s", symbols)
+		}
 	}
 	if timezones != "" {
+		changed = true
 		tzs, err := parseTimezones(timezones)
 		if err != nil {
-			return startConfig, Request{}, err
+			return startConfig, Request{}, changed, err
 		}
 		startConfig.Timezones = tzs
 	}
 	if markers != "" {
+		changed = true
 		if strings.ToLower(markers) == "true" {
 			startConfig.Markers = true
 		} else if strings.ToLower(markers) == "false" {
 			startConfig.Markers = false
 		} else {
-			return startConfig, Request{}, fmt.Errorf("invalid value for markers: %s", markers)
+			return startConfig, Request{}, changed, fmt.Errorf("invalid value for markers: %s", markers)
 		}
 	}
 	if stretch != "" {
+		changed = true
 		if strings.ToLower(stretch) == "true" {
 			startConfig.Stretch = true
 		} else if strings.ToLower(stretch) == "false" {
 			startConfig.Stretch = false
 		} else {
-			return startConfig, Request{}, fmt.Errorf("invalid value for stretch: %s", stretch)
+			return startConfig, Request{}, changed, fmt.Errorf("invalid value for stretch: %s", stretch)
 		}
 	}
 	if colorize != "" {
+		changed = true
 		if strings.ToLower(colorize) == "true" {
 			startConfig.Colorize = true
 		} else if strings.ToLower(colorize) == "false" {
 			startConfig.Colorize = false
 		} else {
-			return startConfig, Request{}, fmt.Errorf("invalid value for colorize: %s", colorize)
+			return startConfig, Request{}, changed, fmt.Errorf("invalid value for colorize: %s", colorize)
 		}
 	}
 
 	// Handle direct flags
 	var request Request
 	if requestTime != "" {
+		changed = true
 		// Parse time
 		t, err := parseTime(requestTime)
 		if err != nil {
-			return startConfig, Request{}, err
+			return startConfig, Request{}, changed, err
 		}
 		request.Time = &t
 	}
 
-	return startConfig, request, nil
+	return startConfig, request, changed, nil
+}
+
+// checkSymbolMode checks if a symbol mode is valid.
+func checkSymbolMode(mode string) bool {
+	return mode == SymbolModeRectangles ||
+		mode == SymbolModeSunMoon ||
+		mode == SymbolModeClocks
 }
 
 // parseTimezones parses a comma-separated list of timezones.
@@ -173,6 +191,8 @@ func parseTime(t string) (time.Time, error) {
 		"150405",
 	} {
 		if t, err := time.Parse(format, t); err == nil {
+			n := time.Now()
+			t = time.Date(n.Year(), n.Month(), n.Day(), t.Hour(), t.Minute(), t.Second(), 0, time.Local)
 			return t, nil
 		}
 	}
