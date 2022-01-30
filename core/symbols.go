@@ -26,8 +26,6 @@ const (
 	SymbolModeRectangles = "rectangles"
 	// SymbolModeSunMoon uses the sun and moon symbols to represent the hours.
 	SymbolModeSunMoon = "sun-moon"
-	// SymbolModeClocks uses the 12-hour clock to represent the hours.
-	SymbolModeClocks = "clocks"
 	// SymbolModeMono uses a single character to represent the hours (use
 	// coloring instead).
 	SymbolModeMono = "mono"
@@ -38,7 +36,7 @@ const (
 // checkSymbolMode checks whether the given symbol mode is valid (true if valid).
 func checkSymbolMode(mode string) bool {
 	switch mode {
-	case SymbolModeRectangles, SymbolModeSunMoon, SymbolModeClocks, SymbolModeMono:
+	case SymbolModeRectangles, SymbolModeSunMoon, SymbolModeMono:
 		return true
 	default:
 		return false
@@ -53,8 +51,6 @@ const (
 )
 
 var (
-	// ClockSymbols is a map of hour to clock symbol.
-	ClockSymbols = []string{"🕛", "🕐", "🕑", "🕒", "🕓", "🕔", "🕕", "🕖", "🕗", "🕘", "🕙", "🕚"}
 	// SunMoonSymbols is a map of day segment to sun/moon symbol.
 	SunMoonSymbols = map[string]string{
 		DaySegmentNight:   "☾",
@@ -99,8 +95,6 @@ func GetHourSymbol(mode string, seg DaySegmentation, color bool, hour int) strin
 	switch mode {
 	case SymbolModeSunMoon:
 		s = SunMoonSymbols[getDaySegment(seg, hour)]
-	case SymbolModeClocks:
-		s = ClockSymbols[hour%12]
 	case SymbolModeMono:
 		s = "#"
 	default:

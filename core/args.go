@@ -26,7 +26,7 @@ func ParseFlags(startConfig Config) (Config, Request, bool, error) {
 		"symbols to use for timezone markers (one of: "+
 			SymbolModeRectangles+", "+
 			SymbolModeSunMoon+", "+
-			SymbolModeClocks+")",
+			SymbolModeMono+")",
 	)
 	flag.StringVar(
 		&timezones,
