@@ -11,16 +11,21 @@ import (
 
 // Config is the configuration struct.
 type Config struct {
-	// Symbol mode
-	Symbols string `json:"symbols"`
+	// Day segmentation
+	DaySegments DaySegmentation `json:"day_segments"`
 	// All timezones to display
 	Timezones []Location `json:"timezones"`
+
+	// Symbol mode
+	Symbols string `json:"symbols"`
 	// Indicates whether to plot markers on the time axis
 	Markers bool `json:"tics"`
 	// Indicates whether to stretch across the terminal width at cost of accuracy
 	Stretch bool `json:"stretch"`
 	// Indicates whether to colorize the symbols
 	Colorize bool `json:"colorize"`
+	// Indicates whether to use the 24-hour clock
+	Hours12 bool `json:"hours12"`
 }
 
 // Location describes a timezone the user wants to display.
@@ -29,6 +34,26 @@ type Location struct {
 	Name string
 	// Machine-readable timezone name
 	TZ string
+}
+
+// DaySegmentation defines how to segment the day.
+type DaySegmentation struct {
+	// MorningHour is the hour at which the morning starts.
+	MorningHour int `json:"morning"`
+	// MorningColor is the color to use for the morning segment.
+	MorningColor string `json:"morning_color"`
+	// DayHour is the hour at which the day starts (basically business hours).
+	DayHour int `json:"day"`
+	// DayColor is the color to use for the day segment.
+	DayColor string `json:"day_color"`
+	// EveningHour is the hour at which the evening starts.
+	EveningHour int `json:"evening"`
+	// EveningColor is the color to use for the evening segment.
+	EveningColor string `json:"evening_color"`
+	// NightHour is the hour at which the night starts.
+	NightHour int `json:"night"`
+	// NightColor is the color to use for the night segment.
+	NightColor string `json:"night_color"`
 }
 
 // DefaultConfig configuration generator.
@@ -46,8 +71,18 @@ func DefaultConfig() Config {
 	// Return default configuration
 	return Config{
 		Timezones: tzs,
-		Markers:   true,
-		Stretch:   true,
+		DaySegments: DaySegmentation{
+			MorningHour:  6,
+			MorningColor: string(ColorRed),
+			DayHour:      8,
+			DayColor:     string(ColorYellow),
+			EveningHour:  18,
+			EveningColor: string(ColorRed),
+			NightHour:    22,
+			NightColor:   string(ColorBlue),
+		},
+		Markers: true,
+		Stretch: true,
 	}
 }
 
@@ -107,7 +142,8 @@ func (c *Config) Save() error {
 
 // validate validates the configuration.
 func (c Config) validate() Config {
-	if c.Symbols != SymbolModeRectangles && c.Symbols != SymbolModeClocks && c.Symbols != SymbolModeSunMoon {
+	// Check whether symbol mode is known
+	if !checkSymbolMode(c.Symbols) {
 		fmt.Printf("Warning - invalid symbols (using default): %s\n", c.Symbols)
 		c.Symbols = SymbolModeDefault
 	}

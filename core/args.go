@@ -132,7 +132,6 @@ func ParseFlags(startConfig Config) (Config, Request, bool, error) {
 		// If last argument is a time, parse it
 		if len(lastArg) > 0 && lastArg[0] >= '0' && lastArg[0] <= '9' {
 			// Parse time
-			changed = true
 			t, err := parseTime(lastArg)
 			if err != nil {
 				return startConfig, Request{}, changed, err
@@ -142,13 +141,6 @@ func ParseFlags(startConfig Config) (Config, Request, bool, error) {
 	}
 
 	return startConfig, request, changed, nil
-}
-
-// checkSymbolMode checks if a symbol mode is valid.
-func checkSymbolMode(mode string) bool {
-	return mode == SymbolModeRectangles ||
-		mode == SymbolModeSunMoon ||
-		mode == SymbolModeClocks
 }
 
 // parseTimezones parses a comma-separated list of timezones.

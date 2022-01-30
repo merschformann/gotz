@@ -37,7 +37,10 @@ func (c Config) PlotTime(request Request) error {
 	if requestedTime {
 		nowDescription = "time"
 	}
-	fmt.Println(strings.Repeat(" ", nowSlot-(len(nowDescription)+1)) + nowDescription + " v " + request.Time.Format("15:04:05"))
+	fmt.Println(strings.Repeat(" ",
+		nowSlot-(len(nowDescription)+1)) +
+		nowDescription + " v " +
+		formatTime(c.Hours12, *request.Time))
 	// Prepare slots
 	for i := 0; i < width; i++ {
 		// Get time of slot
@@ -72,8 +75,8 @@ func (c Config) PlotTime(request Request) error {
 		desc = fmt.Sprintf(
 			"%s: %s %s",
 			desc,
-			formatDay((*request.Time).In(timezones[i])),
-			formatTime((*request.Time).In(timezones[i])))
+			formatDay(c.Hours12, (*request.Time).In(timezones[i])),
+			formatTime(c.Hours12, (*request.Time).In(timezones[i])))
 		if len(desc)-1 < nowSlot {
 			desc = desc + strings.Repeat(" ", nowSlot-len(desc)) + "|"
 		}
@@ -82,7 +85,7 @@ func (c Config) PlotTime(request Request) error {
 			// Convert to tz time
 			tzTime := timeSlots[j].Time.In(timezones[i])
 			// Get symbol of slot
-			symbol := GetHourSymbol(c.Symbols, c.Colorize, tzTime.Hour())
+			symbol := GetHourSymbol(c.Symbols, c.DaySegments, c.Colorize, tzTime.Hour())
 			if j == nowSlot {
 				symbol = "|"
 			}
@@ -92,20 +95,25 @@ func (c Config) PlotTime(request Request) error {
 	}
 
 	// Print markers
-	printMarkers(timeSlots, width)
+	printMarkers(c.Hours12, timeSlots, width)
 
 	return nil
 }
 
-func printMarkers(timeSlots []timeslot, width int) {
+func printMarkers(twelve bool, timeSlots []timeslot, width int) {
 	// Prepare tics
 	tics := make([]string, width)
-	currentHour := timeSlots[0].Time.Hour()
+	currentHour := -1
 	for i := 0; i < width; i++ {
-		hour := timeSlots[i].Time.Hour()
-		if hour%3 == 0 && hour != currentHour {
-			tics[i] = fmt.Sprint(hour)
-			currentHour = hour
+		// Get hour of slot
+		hour := timeSlots[i].Time.Truncate(time.Hour)
+		if hour.Hour()%3 == 0 && hour.Hour() != currentHour {
+			if twelve {
+				tics[i] = hour.Format("3PM")
+			} else {
+				tics[i] = fmt.Sprintf("%d", hour.Hour())
+			}
+			currentHour = hour.Hour()
 		}
 	}
 	// Print markers
@@ -119,7 +127,7 @@ func printMarkers(timeSlots []timeslot, width int) {
 	fmt.Println()
 	// Print tics
 	for i := 0; i < width; i++ {
-		if tics[i] != "" {
+		if tics[i] != "" && i+len(tics[i]) < width {
 			fmt.Print(tics[i])
 			i += len(tics[i]) - 1
 		} else {
@@ -139,11 +147,15 @@ func maxStringLength(s []string) int {
 	return length
 }
 
-func formatTime(t time.Time) string {
-	return t.Format("15:04:05")
+func formatTime(twelve bool, t time.Time) string {
+	if twelve {
+		return t.Format("3:04PM")
+	} else {
+		return t.Format("15:04")
+	}
 }
 
-func formatDay(t time.Time) string {
+func formatDay(twelve bool, t time.Time) string {
 	return t.Format("Mon 02 Jan 2006")
 }
 
