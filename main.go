@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"path"
 
 	"github.com/merschformann/gotz/core"
 )
@@ -10,8 +11,10 @@ import (
 func main() {
 	// TODO: remove this
 	// Delete configuration file if it exists
-	if _, err := os.Stat(".gotz.config"); err == nil {
-		os.Remove(".gotz.config")
+	home, _ := os.UserHomeDir()
+	configFile := path.Join(home, ".gotz.config.json")
+	if _, err := os.Stat(configFile); err == nil {
+		os.Remove(configFile)
 	}
 	// Get configuration
 	config, err := core.Load()
