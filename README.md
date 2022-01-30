@@ -1,8 +1,10 @@
-# gotz
+<img src="material/icon/world.svg" align="right" height="110"/>
 
-A simple timezone info CLI tool.
+# go**tz**
 
-## Installation
+A simple CLI timezone info tool.
+
+## Installation (requires [Go](https://go.dev/doc/install))
 
 ```bash
 go install github.com/gotz/gotz
@@ -13,36 +15,33 @@ go install github.com/gotz/gotz
 Show current time:
 
 ```bash
-$ gotz
-                                now v 02:43:32
-Local   : Sun 30 Jan 2022 02:43:32  |
-▼▼▼▼▼▼▼▼▼▼▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲|▲▲▲▲▲▲▲▲▲▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼
-New York: Sat 29 Jan 2022 20:43:32  |
-▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▲▲▲▲▲▲▲▲|▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▼▼▼▼▼▼▼▼
-London  : Sun 30 Jan 2022 01:43:32  |
-▼▼▼▼▼▼▼▼▼▼▼▼▼▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲|▲▲▲▲▲▲▲▲▲▲▲▲▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼
-Shanghai: Sun 30 Jan 2022 09:43:32  |
-▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▼▼▼▼▼▼▼▼▼▼▼|▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▲▲▲▲▲▲▲▲▲▲▲
-Sydney  : Sun 30 Jan 2022 12:43:32  |
-▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼|▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
- ^        ^        ^        ^        ^        ^        ^        ^       
- 15       18       21       0        3        6        9        12
+gotz
 ```
+
+![preview](material/screenshot/preview1.png)
 
 Show arbitrary time:
 
 ```bash
-$ gotz -t 21
-Local   : Sun 30 Jan 2022 21:00:00  |
-▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▲▲▲▲▲▲▲▲▲|▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▼▼▼▼▼▼▼▼▼
-New York: Sun 30 Jan 2022 15:00:00  |
-▲▲▲▲▲▲▲▲▲▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼|▼▼▼▼▼▼▼▼▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-London  : Sun 30 Jan 2022 20:00:00  |
-▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▲▲▲▲▲▲|▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▼▼▼▼▼▼
-Shanghai: Mon 31 Jan 2022 04:00:00  |
-▼▼▼▼▼▼▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲|▲▲▲▲▲▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼
-Sydney  : Mon 31 Jan 2022 07:00:00  |
-▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▼▼▼|▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▲▲▲
-         ^        ^        ^        ^        ^        ^        ^        
-         12       15       18       21       0        3        6
+gotz 15
 ```
+
+![preview](material/screenshot/preview2.png)
+
+Time can be one of the following formats:
+
+```txt
+15
+15:04
+15:04:05
+3:04pm
+3:04:05pm
+3pm
+1504
+150405
+2006-01-02T15:04:05
+```
+
+## Configure
+
+TODO: Describe configuration options.
