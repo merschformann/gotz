@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Specify platforms to build for
-platforms=("windows/amd64" "linux/amd64" "linux/arm64" "darwin/amd64" "darwin/arm64")
+platforms=("linux/amd64" "linux/arm64" "darwin/amd64" "darwin/arm64", "windows/amd64")
 
 # Clean build directory
 builddir="build"

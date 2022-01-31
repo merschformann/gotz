@@ -6,7 +6,7 @@ A simple CLI timezone info tool.
 
 ## Installation
 
-### Direct via [Go](https://go.dev/doc/install)
+### Directly via [Go](https://go.dev/doc/install)
 
 ```bash
 go install github.com/merschformann/gotz@latest
@@ -14,7 +14,7 @@ go install github.com/merschformann/gotz@latest
 
 ### Binary
 
-Simply download the [binary](/merschformann/gotz/releases/latest/) and put it in your `$PATH`.
+Simply download the [binary](/merschformann/gotz/releases/latest/), rename it to `gotz` and put it in a folder in your `$PATH`.
 
 Comfortable one-liner for most Linux and macOS systems (sudo required for writing to `/usr/local/bin`):
 
