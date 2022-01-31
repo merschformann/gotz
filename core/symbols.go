@@ -2,21 +2,35 @@ package core
 
 import "fmt"
 
-type Color string
-
 const (
-	ColorBlack   Color = "\u001b[30m"
-	ColorWhite   Color = "\u001b[37m"
-	ColorRed     Color = "\u001b[31m"
-	ColorYellow  Color = "\u001b[33m"
-	ColorMagenta Color = "\u001b[35m"
-	ColorGreen   Color = "\u001b[32m"
-	ColorBlue    Color = "\u001b[34m"
-	ColorReset   Color = "\u001b[0m"
+	ColorBlack   string = "\u001b[30m"
+	ColorWhite   string = "\u001b[37m"
+	ColorRed     string = "\u001b[31m"
+	ColorYellow  string = "\u001b[33m"
+	ColorMagenta string = "\u001b[35m"
+	ColorGreen   string = "\u001b[32m"
+	ColorCyan    string = "\u001b[36m"
+	ColorBlue    string = "\u001b[34m"
+	ColorReset   string = "\u001b[0m"
 )
 
+// namedColors defines all terminal colors supported by name.
+var namedColors = map[string]string{
+	"black":   ColorBlack,
+	"white":   ColorWhite,
+	"red":     ColorRed,
+	"yellow":  ColorYellow,
+	"magenta": ColorMagenta,
+	"green":   ColorGreen,
+	"blue":    ColorBlue,
+	"cyan":    ColorCyan,
+}
+
 // colorize the given string with the given color.
-func colorize(color Color, message string) string {
+func colorize(color string, message string) string {
+	if c, ok := namedColors[color]; ok {
+		return fmt.Sprint(string(c), message, ColorReset)
+	}
 	return fmt.Sprint(string(color), message, string(ColorReset))
 }
 
@@ -104,13 +118,13 @@ func GetHourSymbol(mode string, seg DaySegmentation, color bool, hour int) strin
 	if color {
 		switch getDaySegment(seg, hour) {
 		case DaySegmentMorning:
-			s = colorize(Color(seg.MorningColor), s)
+			s = colorize(seg.MorningColor, s)
 		case DaySegmentDay:
-			s = colorize(Color(seg.DayColor), s)
+			s = colorize(seg.DayColor, s)
 		case DaySegmentEvening:
-			s = colorize(Color(seg.EveningColor), s)
+			s = colorize(seg.EveningColor, s)
 		case DaySegmentNight:
-			s = colorize(Color(seg.NightColor), s)
+			s = colorize(seg.NightColor, s)
 		default:
 		}
 	}
