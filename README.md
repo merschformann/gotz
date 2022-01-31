@@ -1,8 +1,8 @@
 <img src="material/icon/world.svg" align="right" height="110"/>
 
-# go**tz**
+# gotz
 
-A simple CLI timezone info tool.
+go**tz** - a simple CLI timezone info tool.
 
 ## Installation
 
