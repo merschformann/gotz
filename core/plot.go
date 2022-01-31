@@ -95,7 +95,9 @@ func (c Config) PlotTime(request Request) error {
 	}
 
 	// Print tics
-	printTics(c.Hours12, timeSlots, width)
+	if c.Tics {
+		printTics(c.Hours12, timeSlots, width)
+	}
 
 	return nil
 }
