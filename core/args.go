@@ -18,7 +18,14 @@ func ParseFlags(startConfig Config) (Config, Request, bool, error) {
 	// Check for any changes
 	var changed bool
 	// Define configuration flags
-	var symbols, timezones, markers, stretch, colorize string
+	var timezones, symbols, markers, stretch, colorize, hours12 string
+	flag.StringVar(
+		&timezones,
+		"timezones",
+		"",
+		"timezones to display, comma-separated (for example: 'America/New_York,Europe/London,Asia/Shanghai' or named 'Office:America/New_York,Home:Europe/London' "+
+			" - for TZ names see TZ database name in https://en.wikipedia.org/wiki/List_of_tz_database_time_zones)",
+	)
 	flag.StringVar(
 		&symbols,
 		"symbols",
@@ -27,13 +34,6 @@ func ParseFlags(startConfig Config) (Config, Request, bool, error) {
 			SymbolModeRectangles+", "+
 			SymbolModeSunMoon+", "+
 			SymbolModeMono+")",
-	)
-	flag.StringVar(
-		&timezones,
-		"timezones",
-		"",
-		"timezones to display, comma-separated (for example: 'America/New_York,Europe/London,Asia/Shanghai' or named 'Office:America/New_York,Home:Europe/London' "+
-			" - for TZ names see TZ database name in https://en.wikipedia.org/wiki/List_of_tz_database_time_zones)",
 	)
 	flag.StringVar(
 		&markers,
@@ -53,6 +53,12 @@ func ParseFlags(startConfig Config) (Config, Request, bool, error) {
 		"",
 		"indicates whether to colorize the symbols (one of: true, false)",
 	)
+	flag.StringVar(
+		&hours12,
+		"hours12",
+		"",
+		"indicates whether to use 12-hour clock (one of: true, false)",
+	)
 
 	// Define direct flags
 	var requestTime string
@@ -67,13 +73,6 @@ func ParseFlags(startConfig Config) (Config, Request, bool, error) {
 	flag.Parse()
 
 	// Handle configuration
-	if symbols != "" {
-		changed = true
-		startConfig.Symbols = symbols
-		if !checkSymbolMode(startConfig.Symbols) {
-			return startConfig, Request{}, false, fmt.Errorf("invalid symbol mode: %s", symbols)
-		}
-	}
 	if timezones != "" {
 		changed = true
 		tzs, err := parseTimezones(timezones)
@@ -81,6 +80,13 @@ func ParseFlags(startConfig Config) (Config, Request, bool, error) {
 			return startConfig, Request{}, changed, err
 		}
 		startConfig.Timezones = tzs
+	}
+	if symbols != "" {
+		changed = true
+		startConfig.Symbols = symbols
+		if !checkSymbolMode(startConfig.Symbols) {
+			return startConfig, Request{}, false, fmt.Errorf("invalid symbol mode: %s", symbols)
+		}
 	}
 	if markers != "" {
 		changed = true
@@ -110,6 +116,16 @@ func ParseFlags(startConfig Config) (Config, Request, bool, error) {
 			startConfig.Colorize = false
 		} else {
 			return startConfig, Request{}, changed, fmt.Errorf("invalid value for colorize: %s", colorize)
+		}
+	}
+	if hours12 != "" {
+		changed = true
+		if strings.ToLower(hours12) == "true" {
+			startConfig.Hours12 = true
+		} else if strings.ToLower(hours12) == "false" {
+			startConfig.Hours12 = false
+		} else {
+			return startConfig, Request{}, changed, fmt.Errorf("invalid value for hours12: %s", hours12)
 		}
 	}
 
