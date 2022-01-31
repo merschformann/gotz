@@ -54,6 +54,7 @@ Set the timezones to be used by default:
 
 ```bash
 gotz --timezones America/New_York,Europe/Berlin
+```
 
 ## Customization
 
