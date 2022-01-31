@@ -19,9 +19,9 @@ do
         output_name+=".exe"
     fi
 
+    echo "Building $output_name..."
     env GOOS=$GOOS GOARCH=$GOARCH go build -o $output_name .
     if [ $? -ne 0 ]; then
-        echo "Error occurred during build, exiting ..."
-        exit 1
+        echo "Error occurred during build, continuing..."
     fi
 done

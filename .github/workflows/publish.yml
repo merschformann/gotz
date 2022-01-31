@@ -17,7 +17,9 @@ jobs:
       id: go
     
     - name: compile
-      run: bash material/scripts/buildall.sh
+      run: |
+        go version
+        bash material/scripts/buildall.sh
     
     - name: Upload binaries to release
       uses: svenstaro/upload-release-action@v2
