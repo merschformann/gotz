@@ -62,8 +62,8 @@ func DefaultConfig() Config {
 	// Add some default locations
 	ny, _ := time.LoadLocation("America/New_York")
 	tzs = append(tzs, Location{"New York", ny.String()})
-	london, _ := time.LoadLocation("Europe/London")
-	tzs = append(tzs, Location{"London", london.String()})
+	london, _ := time.LoadLocation("Europe/Berlin")
+	tzs = append(tzs, Location{"Berlin", london.String()})
 	shanghai, _ := time.LoadLocation("Asia/Shanghai")
 	tzs = append(tzs, Location{"Shanghai", shanghai.String()})
 	sydney, _ := time.LoadLocation("Australia/Sydney")
