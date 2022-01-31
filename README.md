@@ -53,10 +53,10 @@ Time can be one of the following formats:
 Set the timezones to be used by default:
 
 ```bash
-gotz --timezones America/New_York,Europe/Berlin
+gotz --timezones "Office:America/New_York,Home:Europe/Berlin"
 ```
 
-(lookup the timezones in the [timezones](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones) wiki page - _TZ database name_ column)
+(lookup timezones in the [timezones](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones) wiki page - _TZ database name_ column)
 
 Set 12-hour format:
 
@@ -91,6 +91,7 @@ The configuration is stored in `$HOME/.gotz.config.json`. It can be configured d
     },
     // Configures the timezones to be shown
     "timezones": [
+        // Timezones have a name (Name) and timezone code (TZ)
         { "Name": "Office", "TZ": "America/New_York" },
         { "Name": "Home", "TZ": "Europe/Berlin" },
     ],
