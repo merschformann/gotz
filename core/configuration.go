@@ -81,6 +81,7 @@ func DefaultConfig() Config {
 			NightHour:    22,
 			NightColor:   string(ColorBlue),
 		},
+		Symbols: SymbolModeDefault,
 		Tics:    false,
 		Stretch: true,
 	}
