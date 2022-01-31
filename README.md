@@ -56,6 +56,8 @@ Set the timezones to be used by default:
 gotz --timezones America/New_York,Europe/Berlin
 ```
 
+(lookup the timezones in the [timezones](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones) wiki page - _TZ database name_ column)
+
 ## Customization
 
 TODO: Describe configuration options.
