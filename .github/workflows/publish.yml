@@ -18,7 +18,10 @@ jobs:
     
     - name: compile
       run: |
+        echo "go version:"
         go version
+        echo "go env:"
+        go env
         bash material/scripts/buildall.sh
     
     - name: Upload binaries to release
