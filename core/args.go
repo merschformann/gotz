@@ -18,7 +18,7 @@ func ParseFlags(startConfig Config) (Config, Request, bool, error) {
 	// Check for any changes
 	var changed bool
 	// Define configuration flags
-	var timezones, symbols, markers, stretch, colorize, hours12 string
+	var timezones, symbols, tics, stretch, colorize, hours12 string
 	flag.StringVar(
 		&timezones,
 		"timezones",
@@ -30,16 +30,16 @@ func ParseFlags(startConfig Config) (Config, Request, bool, error) {
 		&symbols,
 		"symbols",
 		"",
-		"symbols to use for timezone markers (one of: "+
+		"symbols to use for time blocks (one of: "+
 			SymbolModeRectangles+", "+
 			SymbolModeSunMoon+", "+
 			SymbolModeMono+")",
 	)
 	flag.StringVar(
-		&markers,
-		"markers",
+		&tics,
+		"tics",
 		"",
-		"indicates whether to use markers on the time axis (one of: true, false)",
+		"indicates whether to use local time tics on the time axis (one of: true, false)",
 	)
 	flag.StringVar(
 		&stretch,
@@ -88,14 +88,14 @@ func ParseFlags(startConfig Config) (Config, Request, bool, error) {
 			return startConfig, Request{}, false, fmt.Errorf("invalid symbol mode: %s", symbols)
 		}
 	}
-	if markers != "" {
+	if tics != "" {
 		changed = true
-		if strings.ToLower(markers) == "true" {
-			startConfig.Markers = true
-		} else if strings.ToLower(markers) == "false" {
-			startConfig.Markers = false
+		if strings.ToLower(tics) == "true" {
+			startConfig.Tics = true
+		} else if strings.ToLower(tics) == "false" {
+			startConfig.Tics = false
 		} else {
-			return startConfig, Request{}, changed, fmt.Errorf("invalid value for markers: %s", markers)
+			return startConfig, Request{}, changed, fmt.Errorf("invalid value for tics: %s", tics)
 		}
 	}
 	if stretch != "" {

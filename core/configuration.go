@@ -18,8 +18,8 @@ type Config struct {
 
 	// Symbol mode
 	Symbols string `json:"symbols"`
-	// Indicates whether to plot markers on the time axis
-	Markers bool `json:"tics"`
+	// Indicates whether to plot tics on the time axis
+	Tics bool `json:"tics"`
 	// Indicates whether to stretch across the terminal width at cost of accuracy
 	Stretch bool `json:"stretch"`
 	// Indicates whether to colorize the symbols
@@ -81,7 +81,7 @@ func DefaultConfig() Config {
 			NightHour:    22,
 			NightColor:   string(ColorBlue),
 		},
-		Markers: false,
+		Tics:    false,
 		Stretch: true,
 	}
 }

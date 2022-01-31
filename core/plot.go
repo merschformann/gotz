@@ -94,13 +94,13 @@ func (c Config) PlotTime(request Request) error {
 		fmt.Println()
 	}
 
-	// Print markers
-	printMarkers(c.Hours12, timeSlots, width)
+	// Print tics
+	printTics(c.Hours12, timeSlots, width)
 
 	return nil
 }
 
-func printMarkers(twelve bool, timeSlots []timeslot, width int) {
+func printTics(twelve bool, timeSlots []timeslot, width int) {
 	// Prepare tics
 	tics := make([]string, width)
 	currentHour := -1
@@ -116,7 +116,7 @@ func printMarkers(twelve bool, timeSlots []timeslot, width int) {
 			currentHour = hour.Hour()
 		}
 	}
-	// Print markers
+	// Print tics
 	for i := 0; i < width; i++ {
 		if tics[i] != "" {
 			fmt.Print("^")
