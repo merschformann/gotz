@@ -4,11 +4,24 @@
 
 A simple CLI timezone info tool.
 
-## Installation (requires [Go](https://go.dev/doc/install))
+## Installation
+
+### Direct via [Go](https://go.dev/doc/install)
 
 ```bash
 go install github.com/merschformann/gotz@latest
 ```
+
+### Binary
+
+Simply download the [binary](/merschformann/gotz/releases/latest/) and put it in your `$PATH`.
+
+Comfortable one-liner for most Linux and macOS systems (sudo required for writing to `/usr/local/bin`):
+
+| OS | Command |
+| --- | --- |
+| Linux | `sudo wget -PN /usr/local/bin/ https://github.com/merschformann/gotz/releases/latest/download/gotz` |
+| macOS | `sudo wget -PN /usr/local/bin/ https://github.com/merschformann/gotz/releases/latest/download/gotz` |
 
 ## Usage
 
