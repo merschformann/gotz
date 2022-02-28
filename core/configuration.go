@@ -26,6 +26,9 @@ type Config struct {
 	Colorize bool `json:"colorize"`
 	// Indicates whether to use the 24-hour clock
 	Hours12 bool `json:"hours12"`
+
+	// Indicates whether to continuously update
+	Live bool `json:"live"`
 }
 
 // Location describes a timezone the user wants to display.

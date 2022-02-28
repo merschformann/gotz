@@ -18,7 +18,7 @@ func ParseFlags(startConfig Config) (Config, Request, bool, error) {
 	// Check for any changes
 	var changed bool
 	// Define configuration flags
-	var timezones, symbols, tics, stretch, colorize, hours12 string
+	var timezones, symbols, tics, stretch, colorize, hours12, live string
 	flag.StringVar(
 		&timezones,
 		"timezones",
@@ -58,6 +58,12 @@ func ParseFlags(startConfig Config) (Config, Request, bool, error) {
 		"hours12",
 		"",
 		"indicates whether to use 12-hour clock (one of: true, false)",
+	)
+	flag.StringVar(
+		&live,
+		"live",
+		"",
+		"indicates whether to display time live (quit via 'q' or 'Ctrl+C') (one of: true, false)",
 	)
 
 	// Define direct flags
@@ -126,6 +132,16 @@ func ParseFlags(startConfig Config) (Config, Request, bool, error) {
 			startConfig.Hours12 = false
 		} else {
 			return startConfig, Request{}, changed, fmt.Errorf("invalid value for hours12: %s", hours12)
+		}
+	}
+	if live != "" {
+		changed = true
+		if strings.ToLower(live) == "true" {
+			startConfig.Live = true
+		} else if strings.ToLower(live) == "false" {
+			startConfig.Live = false
+		} else {
+			return startConfig, Request{}, changed, fmt.Errorf("invalid value for live: %s", live)
 		}
 	}
 
