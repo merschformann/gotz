@@ -89,8 +89,8 @@ func ParseFlags(startConfig Config) (Config, Request, bool, error) {
 	}
 	if symbols != "" {
 		changed = true
-		startConfig.Symbols = symbols
-		if !checkSymbolMode(startConfig.Symbols) {
+		startConfig.Style.Symbols = symbols
+		if !checkSymbolMode(startConfig.Style.Symbols) {
 			return startConfig, Request{}, false, fmt.Errorf("invalid symbol mode: %s", symbols)
 		}
 	}
@@ -117,9 +117,9 @@ func ParseFlags(startConfig Config) (Config, Request, bool, error) {
 	if colorize != "" {
 		changed = true
 		if strings.ToLower(colorize) == "true" {
-			startConfig.Colorize = true
+			startConfig.Style.Colorize = true
 		} else if strings.ToLower(colorize) == "false" {
-			startConfig.Colorize = false
+			startConfig.Style.Colorize = false
 		} else {
 			return startConfig, Request{}, changed, fmt.Errorf("invalid value for colorize: %s", colorize)
 		}

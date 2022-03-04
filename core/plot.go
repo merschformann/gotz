@@ -7,20 +7,38 @@ import (
 	"time"
 
 	"github.com/gdamore/tcell/v2"
-	"golang.org/x/term"
 )
 
 type timeslot struct {
 	Time time.Time
 }
 
+// plotter compiles functionality & configuration for plotting.
 type plotter struct {
-	plotLine      func(msgs ...interface{}) // func for plotting a line (with line-break)
-	plotString    func(msg string)          // func for plotting simple strings
-	terminalWidth int                       // Terminal width
+	plotLine      func(t ContextType, msgs ...interface{}) // func for plotting a line (with line-break)
+	plotString    func(t ContextType, msg string)          // func for plotting simple strings
+	terminalWidth int                                      // Terminal width
+	modeStatic    bool                                     // Whether to plot static or live
 }
 
-func (c Config) Plot(request Request) error {
+// formatTime formats the time in the default way (distinguishing 12/24 hours
+// though).
+func formatTime(twelve bool, t time.Time) string {
+	if twelve {
+		return t.Format("3:04PM")
+	} else {
+		return t.Format("15:04")
+	}
+}
+
+// formatDay formats the day in the default way.
+func formatDay(twelve bool, t time.Time) string {
+	return t.Format("Mon 02 Jan 2006")
+}
+
+// Plot is the main plotting function. It either plots to the terminal in a
+// conventional way or uses tcell for providing a continuously updating plot.
+func Plot(c Config, request Request) error {
 	if c.Live {
 		// --> Plot time using tcell
 		// Initialize screen
@@ -42,26 +60,39 @@ func (c Config) Plot(request Request) error {
 		// s.EnableMouse()
 		// s.EnablePaste()
 
+		// Predefine styles
+		styles := map[ContextType]tcell.Style{
+			ContextBackground: tcell.StyleDefault.Background(tcell.ColorBlack),
+			ContextForeground: tcell.StyleDefault.Foreground(tcell.ColorWhite),
+			ContextMorning:    tcell.StyleDefault.Foreground(tcell.ColorGreen),
+			ContextDay:        tcell.StyleDefault.Foreground(tcell.ColorYellow),
+			ContextEvening:    tcell.StyleDefault.Foreground(tcell.ColorRed),
+			ContextNight:      tcell.StyleDefault.Foreground(tcell.ColorBlue),
+		}
+
 		// Define plotting functions for tcell
 		x, y := 0, 0
-		plotLine := func(msgs ...interface{}) {
+		plotLine := func(t ContextType, msgs ...interface{}) {
 			for _, msg := range msgs {
 				fmt.Println(msg)
 				for _, r := range fmt.Sprint(msg) {
-					s.SetContent(x, y, r, nil, tcell.StyleDefault)
+					s.SetContent(x, y, r, nil, styles[t])
 					x++
 				}
 			}
 			x = 0
 			y++
 		}
-		plotString := func(msg string) {
+		plotString := func(t ContextType, msg string) {
 			fmt.Println(msg)
 			for i, r := range fmt.Sprint(msg) {
-				s.SetContent(x+i, y, r, nil, tcell.StyleDefault)
+				s.SetContent(x+i, y, r, nil, styles[t])
 				x++
 			}
 		}
+
+		// Prepare plotter
+		plt := plotter{plotLine: plotLine, plotString: plotString}
 
 		// Track terminal size
 		width, height := 0, 0
@@ -76,13 +107,9 @@ func (c Config) Plot(request Request) error {
 				// Update plot info
 				width = w
 				x, y = 0, 0
-				plt := plotter{
-					terminalWidth: width,
-					plotLine:      plotLine,
-					plotString:    plotString,
-				}
+				plt.terminalWidth = width
 				// Redraw
-				err := c.plotTime(request, plt)
+				err := plotTime(plt, c, request)
 				if err != nil {
 					return err
 				}
@@ -109,11 +136,28 @@ func (c Config) Plot(request Request) error {
 		}
 	} else {
 		// --> Plot time using fmt
-		err := c.plotTime(request, plotter{
-			terminalWidth: getTerminalWidth(),
-			plotLine:      func(line ...interface{}) { fmt.Println(line...) },
-			plotString:    func(msg string) { fmt.Print(msg) },
-		})
+		colorMap := getStaticColorMap(c.Style.Coloring)
+		err := plotTime(
+			plotter{
+				terminalWidth: getTerminalWidth(),
+				plotLine: func(t ContextType, line ...interface{}) {
+					if c, ok := colorMap[t]; ok && c != "" {
+						fmt.Println(c + fmt.Sprint(line) + ColorReset)
+					} else {
+						fmt.Println(line...)
+					}
+				},
+				plotString: func(t ContextType, msg string) {
+					if c, ok := colorMap[t]; ok && c != "" {
+						fmt.Print(c + fmt.Sprint(msg) + ColorReset)
+					} else {
+						fmt.Print(msg)
+					}
+				},
+			},
+			c,
+			request,
+		)
 		if err != nil {
 			return err
 		}
@@ -122,13 +166,14 @@ func (c Config) Plot(request Request) error {
 	return nil
 }
 
-func (c Config) plotTime(request Request, plt plotter) error {
+// plotTime plots the time on the terminal.
+func plotTime(plt plotter, cfg Config, request Request) error {
 	// Get terminal width
 	width := plt.terminalWidth
 	// Set hours to plot
 	hours := 24
 	// Get terminal width
-	if !c.Stretch {
+	if !cfg.Stretch {
 		width = width / 24 * 24
 	}
 	// Get current time
@@ -148,10 +193,12 @@ func (c Config) plotTime(request Request, plt plotter) error {
 	if requestedTime {
 		nowDescription = "time"
 	}
-	plt.plotLine(strings.Repeat(" ",
-		nowSlot-(len(nowDescription)+1)) +
-		nowDescription + " v " +
-		formatTime(c.Hours12, *request.Time))
+	plt.plotLine(
+		ContextForeground,
+		strings.Repeat(" ",
+			nowSlot-(len(nowDescription)+1))+
+			nowDescription+" v "+
+			formatTime(cfg.Hours12, *request.Time))
 	// Prepare slots
 	for i := 0; i < width; i++ {
 		// Get time of slot
@@ -163,11 +210,11 @@ func (c Config) plotTime(request Request, plt plotter) error {
 	}
 
 	// Prepare timezones to plot
-	timezones := make([]*time.Location, len(c.Timezones)+1)
-	descriptions := make([]string, len(c.Timezones)+1)
+	timezones := make([]*time.Location, len(cfg.Timezones)+1)
+	descriptions := make([]string, len(cfg.Timezones)+1)
 	timezones[0] = time.Local
 	descriptions[0] = "Local"
-	for i, tz := range c.Timezones {
+	for i, tz := range cfg.Timezones {
 		// Get timezone
 		loc, err := time.LoadLocation(tz.TZ)
 		if err != nil {
@@ -186,35 +233,41 @@ func (c Config) plotTime(request Request, plt plotter) error {
 		desc = fmt.Sprintf(
 			"%s: %s %s",
 			desc,
-			formatDay(c.Hours12, (*request.Time).In(timezones[i])),
-			formatTime(c.Hours12, (*request.Time).In(timezones[i])))
+			formatDay(cfg.Hours12, (*request.Time).In(timezones[i])),
+			formatTime(cfg.Hours12, (*request.Time).In(timezones[i])))
 		if len(desc)-1 < nowSlot {
 			desc = desc + strings.Repeat(" ", nowSlot-len(desc)) + "|"
 		}
-		plt.plotLine(desc)
+		plt.plotLine(ContextForeground, desc)
 		for j := 0; j < width; j++ {
 			// Convert to tz time
 			tzTime := timeSlots[j].Time.In(timezones[i])
 			// Get symbol of slot
-			symbol := GetHourSymbol(c.Symbols, c.DaySegments, c.Colorize, tzTime.Hour())
-			if j == nowSlot {
-				symbol = "|"
+			s := GetHourSymbol(cfg.Style, tzTime.Hour())
+			// Get segment type of slot
+			seg := getDaySegment(cfg.Style.DaySegmentation, tzTime.Hour())
+			// Colorize statically if requested
+			if cfg.Style.Colorize && plt.modeStatic {
+				colorizeStatic(cfg.Style, tzTime.Hour(), s)
 			}
-			plt.plotString(symbol)
+			if j == nowSlot {
+				s = "|"
+			}
+			plt.plotString(seg, s)
 		}
-		plt.plotLine()
+		plt.plotLine(ContextForeground)
 	}
 
 	// Print tics
-	if c.Tics {
-		printTics(c.Hours12, timeSlots, width, plt)
+	if cfg.Tics {
+		plotTics(plt, cfg.Hours12, timeSlots, width)
 	}
 
 	return nil
 }
 
-// printTics prints the tics on the plot.
-func printTics(twelve bool, timeSlots []timeslot, width int, plt plotter) {
+// plotTics adds tics to the plot.
+func plotTics(plt plotter, hours12 bool, timeSlots []timeslot, width int) {
 	// Prepare tics
 	tics := make([]string, width)
 	currentHour := -1
@@ -222,7 +275,7 @@ func printTics(twelve bool, timeSlots []timeslot, width int, plt plotter) {
 		// Get hour of slot
 		hour := timeSlots[i].Time.Truncate(time.Hour)
 		if hour.Hour()%3 == 0 && hour.Hour() != currentHour {
-			if twelve {
+			if hours12 {
 				tics[i] = hour.Format("3PM")
 			} else {
 				tics[i] = fmt.Sprintf("%d", hour.Hour())
@@ -233,55 +286,20 @@ func printTics(twelve bool, timeSlots []timeslot, width int, plt plotter) {
 	// Print tics
 	for i := 0; i < width; i++ {
 		if tics[i] != "" {
-			plt.plotString("^")
+			plt.plotString(ContextForeground, "^")
 		} else {
-			plt.plotString(" ")
+			plt.plotString(ContextForeground, " ")
 		}
 	}
-	plt.plotLine()
+	plt.plotLine(ContextForeground)
 	// Print tics
 	for i := 0; i < width; i++ {
 		if tics[i] != "" && i+len(tics[i]) < width {
-			plt.plotString(tics[i])
+			plt.plotString(ContextForeground, tics[i])
 			i += len(tics[i]) - 1
 		} else {
-			plt.plotString(" ")
+			plt.plotString(ContextForeground, " ")
 		}
 	}
-	plt.plotLine()
-}
-
-// maxStringLength returns the length of the longest string in the given slice.
-func maxStringLength(s []string) int {
-	length := 0
-	for _, str := range s {
-		if len(str) > length {
-			length = len(str)
-		}
-	}
-	return length
-}
-
-// formatTime formats the time in the default way (distinguishing 12/24 hours
-// though).
-func formatTime(twelve bool, t time.Time) string {
-	if twelve {
-		return t.Format("3:04PM")
-	} else {
-		return t.Format("15:04")
-	}
-}
-
-// formatDay formats the day in the default way.
-func formatDay(twelve bool, t time.Time) string {
-	return t.Format("Mon 02 Jan 2006")
-}
-
-// getTerminalWidth returns the width of the terminal.
-func getTerminalWidth() int {
-	width, _, err := term.GetSize(0)
-	if err != nil || width < 24 {
-		return 72
-	}
-	return width
+	plt.plotLine(ContextForeground)
 }

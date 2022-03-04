@@ -29,7 +29,7 @@ func main() {
 		}
 	}
 	// Plot time
-	err = config.Plot(request)
+	err = core.Plot(config, request)
 	if err != nil {
 		fmt.Println("error plotting time:", err)
 		os.Exit(1)
