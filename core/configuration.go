@@ -186,8 +186,8 @@ func saveDefault() (Config, error) {
 
 // Save configuration to file.
 func (c *Config) Save() error {
-	// Marshal
-	data, err := json.Marshal(c)
+	// Marshal and pretty-print
+	data, err := json.MarshalIndent(c, "", "  ")
 	if err != nil {
 		return err
 	}
