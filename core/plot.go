@@ -15,11 +15,14 @@ type timeslot struct {
 
 // Plotter compiles functionality & configuration for plotting.
 type Plotter struct {
-	PlotLine      func(t ContextType, msgs ...interface{}) // func for plotting a line (with line-break)
-	PlotString    func(t ContextType, msg string)          // func for plotting simple strings
-	TerminalWidth int                                      // Terminal width
-	modeStatic    bool                                     // Whether to plot static or live
-	now           bool                                     // Whether to plot the current time
+	// func for plotting a line (with line-break)
+	PlotLine func(t ContextType, msgs ...interface{})
+	// func for plotting simple strings
+	PlotString func(t ContextType, msg string)
+	// Terminal width
+	TerminalWidth int
+	// Whether to plot the current time
+	Now bool
 }
 
 // formatTime formats the time in the default way (distinguishing 12/24 hours
@@ -113,7 +116,7 @@ func Plot(c Config, t time.Time) error {
 		}
 
 		// Prepare plotter
-		plt := Plotter{PlotLine: plotLine, PlotString: plotString, now: true}
+		plt := Plotter{PlotLine: plotLine, PlotString: plotString, Now: true}
 
 		// Refresh time periodically
 		updateTimeout := time.Duration(40) * time.Millisecond
@@ -168,7 +171,7 @@ func Plot(c Config, t time.Time) error {
 		// Prepare plotter
 		colorMap := getStaticColorMap(c.Style.Coloring)
 		plt := Plotter{
-			now:           t.IsZero(),
+			Now:           t.IsZero(),
 			TerminalWidth: getTerminalWidth(),
 			PlotLine: func(t ContextType, line ...interface{}) {
 				if ch, ok := colorMap[t]; ok && ch != "" && c.Style.Colorize {
@@ -186,7 +189,7 @@ func Plot(c Config, t time.Time) error {
 			},
 		}
 		// Get current time, if no specific time was requested
-		if plt.now {
+		if plt.Now {
 			t = time.Now()
 		}
 		// Plot
@@ -216,7 +219,7 @@ func PlotTime(plt Plotter, cfg Config, t time.Time) error {
 	offsetMinutes := slotMinutes * width / 2
 	// Plot header
 	nowDescription := "now"
-	if !plt.now {
+	if !plt.Now {
 		nowDescription = "time"
 	}
 	plt.PlotLine(
