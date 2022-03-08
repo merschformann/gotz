@@ -19,6 +19,7 @@ type plotter struct {
 	plotString    func(t ContextType, msg string)          // func for plotting simple strings
 	terminalWidth int                                      // Terminal width
 	modeStatic    bool                                     // Whether to plot static or live
+	now           bool                                     // Whether to plot the current time
 }
 
 // formatTime formats the time in the default way (distinguishing 12/24 hours
@@ -31,6 +32,17 @@ func formatTime(twelve bool, t time.Time) string {
 	}
 }
 
+// updateTimeNeeded indicates whether the time shown should be updated.
+func updateTimeNeeded(shown, now time.Time) bool {
+	// Check if time has changed
+	return shown.Second() != now.Second() ||
+		shown.Minute() != now.Minute() ||
+		shown.Hour() != now.Hour() ||
+		shown.Day() != now.Day() ||
+		shown.Month() != now.Month() ||
+		shown.Year() != now.Year()
+}
+
 // formatDay formats the day in the default way.
 func formatDay(twelve bool, t time.Time) string {
 	return t.Format("Mon 02 Jan 2006")
@@ -38,12 +50,10 @@ func formatDay(twelve bool, t time.Time) string {
 
 // Plot is the main plotting function. It either plots to the terminal in a
 // conventional way or uses tcell for providing a continuously updating plot.
-func Plot(c Config, request Request) error {
+func Plot(c Config, t time.Time) error {
 	if c.Live {
 		// --> Plot time using tcell
 		// Initialize screen
-		// defStyle := tcell.StyleDefault.Background(tcell.ColorReset).Foreground(tcell.ColorReset)
-		// boxStyle := tcell.StyleDefault.Foreground(tcell.ColorWhite).Background(tcell.ColorPurple)
 		s, err := tcell.NewScreen()
 		if err != nil {
 			return fmt.Errorf("error creating tcell screen for live view - %+v", err)
@@ -51,16 +61,12 @@ func Plot(c Config, request Request) error {
 		if err := s.Init(); err != nil {
 			return fmt.Errorf("error initializing tcell screen for live view - %+v", err)
 		}
-		quit := func() {
+		exit := func() {
 			s.Fini()
 			os.Exit(0)
 		}
 
-		// s.SetStyle(defStyle)
-		// s.EnableMouse()
-		// s.EnablePaste()
-
-		// Predefine styles
+		// Initialize styles
 		styles := map[ContextType]tcell.Style{
 			ContextBackground: tcell.StyleDefault.Background(tcell.ColorBlack),
 			ContextForeground: tcell.StyleDefault.Foreground(tcell.ColorWhite),
@@ -92,70 +98,82 @@ func Plot(c Config, request Request) error {
 		}
 
 		// Prepare plotter
-		plt := plotter{plotLine: plotLine, plotString: plotString}
+		plt := plotter{plotLine: plotLine, plotString: plotString, now: true}
 
-		// Track terminal size
-		width, height := 0, 0
+		// Track update events
+		width, height := s.Size()
+		now := time.Time{} // Requested time is discarded in live mode; first 'now' is set to trigger refresh
+
+		// Refresh time periodically
+		updateTimeout := time.Duration(40) * time.Millisecond
 
 		// Enter main loop
 		for {
-			// Refresh if size changed (or initializing)
+			// Check whether to refresh the plot (due to time or resizing)
 			w, h := s.Size()
-			if w != width || h != height {
-				// Clear screen
-				s.Clear()
-				// Update plot info
-				width = w
+			t = time.Now()
+			if w != width || h != height || updateTimeNeeded(now, t) {
+				// Update dynamic plot information
+				width, height = w, h
+				now = t
 				x, y = 0, 0
-				plt.terminalWidth = width
-				// Redraw
-				err := plotTime(plt, c, request)
+				plt.terminalWidth = w
+				// Refresh time (pass zero time to indicate now should be used)
+				s.Clear()
+				err := plotTime(plt, c, now)
 				if err != nil {
 					return err
 				}
+				// Update screen
 				s.Sync()
 			}
 
-			// Update screen
-			s.Show()
-
-			// Poll event
-			ev := s.PollEvent()
-
-			// Process event
-			switch ev := ev.(type) {
-			case *tcell.EventResize:
-				s.Sync()
-			case *tcell.EventKey:
-				if ev.Key() == tcell.KeyEscape || ev.Key() == tcell.KeyCtrlC || ev.Rune() == 'q' {
-					quit()
+			// Poll event or simply wait
+			if s.HasPendingEvent() {
+				// Grab the event
+				ev := s.PollEvent()
+				// Process event
+				switch ev := ev.(type) {
+				case *tcell.EventResize:
+					s.Sync()
+				case *tcell.EventKey:
+					if ev.Key() == tcell.KeyEscape || ev.Key() == tcell.KeyCtrlC || ev.Rune() == 'q' {
+						exit()
+					}
 				}
+			} else {
+				// Just sleep before redrawing
+				time.Sleep(updateTimeout)
 			}
 		}
 	} else {
 		// --> Plot time using fmt
+		// Prepare plotter
 		colorMap := getStaticColorMap(c.Style.Coloring)
-		err := plotTime(
-			plotter{
-				terminalWidth: getTerminalWidth(),
-				plotLine: func(t ContextType, line ...interface{}) {
-					if c, ok := colorMap[t]; ok && c != "" {
-						fmt.Println(c + fmt.Sprint(line) + ColorReset)
-					} else {
-						fmt.Println(line...)
-					}
-				},
-				plotString: func(t ContextType, msg string) {
-					if c, ok := colorMap[t]; ok && c != "" {
-						fmt.Print(c + fmt.Sprint(msg) + ColorReset)
-					} else {
-						fmt.Print(msg)
-					}
-				},
+		plt := plotter{
+			now:           t.IsZero(),
+			terminalWidth: getTerminalWidth(),
+			plotLine: func(t ContextType, line ...interface{}) {
+				if c, ok := colorMap[t]; ok && c != "" {
+					fmt.Println(c + fmt.Sprint(line) + ColorReset)
+				} else {
+					fmt.Println(line...)
+				}
 			},
-			c,
-			request,
-		)
+			plotString: func(t ContextType, msg string) {
+				if c, ok := colorMap[t]; ok && c != "" {
+					fmt.Print(c + fmt.Sprint(msg) + ColorReset)
+				} else {
+					fmt.Print(msg)
+				}
+			},
+		}
+		// Get current time, if no specific time was requested
+		if plt.now {
+			t = time.Now()
+		}
+		// Plot
+		err := plotTime(plt, c, t)
 		if err != nil {
 			return err
 		}
@@ -165,7 +183,7 @@ func Plot(c Config, request Request) error {
 }
 
 // plotTime plots the time on the terminal.
-func plotTime(plt plotter, cfg Config, request Request) error {
+func plotTime(plt plotter, cfg Config, t time.Time) error {
 	// Get terminal width
 	width := plt.terminalWidth
 	// Set hours to plot
@@ -174,13 +192,6 @@ func plotTime(plt plotter, cfg Config, request Request) error {
 	if !cfg.Stretch {
 		width = width / 24 * 24
 	}
-	// Get current time
-	requestedTime := true
-	if request.Time == nil {
-		requestedTime = false
-		t := time.Now()
-		request.Time = &t
-	}
 	// Determine time slot basics
 	timeSlots := make([]timeslot, width)
 	nowSlot := width / 2
@@ -188,7 +199,7 @@ func plotTime(plt plotter, cfg Config, request Request) error {
 	offsetMinutes := slotMinutes * width / 2
 	// Print header
 	nowDescription := "now"
-	if requestedTime {
+	if !plt.now {
 		nowDescription = "time"
 	}
 	plt.plotLine(
@@ -196,11 +207,11 @@ func plotTime(plt plotter, cfg Config, request Request) error {
 		strings.Repeat(" ",
 			nowSlot-(len(nowDescription)+1))+
 			nowDescription+" v "+
-			formatTime(cfg.Hours12, *request.Time))
+			formatTime(cfg.Hours12, t))
 	// Prepare slots
 	for i := 0; i < width; i++ {
 		// Get time of slot
-		slotTime := request.Time.Add(time.Duration(i*slotMinutes-offsetMinutes) * time.Minute)
+		slotTime := t.Add(time.Duration(i*slotMinutes-offsetMinutes) * time.Minute)
 		// Store timeslot info
 		timeSlots[i] = timeslot{
 			Time: slotTime,
@@ -231,8 +242,8 @@ func plotTime(plt plotter, cfg Config, request Request) error {
 		desc = fmt.Sprintf(
 			"%s: %s %s",
 			desc,
-			formatDay(cfg.Hours12, (*request.Time).In(timezones[i])),
-			formatTime(cfg.Hours12, (*request.Time).In(timezones[i])))
+			formatDay(cfg.Hours12, t.In(timezones[i])),
+			formatTime(cfg.Hours12, t.In(timezones[i])))
 		if len(desc)-1 < nowSlot {
 			desc = desc + strings.Repeat(" ", nowSlot-len(desc)) + "|"
 		}

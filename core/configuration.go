@@ -25,7 +25,8 @@ type Config struct {
 
 	// Indicates whether to plot tics on the time axis.
 	Tics bool `json:"tics"`
-	// Indicates whether to stretch across the terminal width at cost of accuracy.
+	// Indicates whether to stretch across the terminal width at cost of
+	// accuracy.
 	Stretch bool `json:"stretch"`
 	// Indicates whether to use the 24-hour clock.
 	Hours12 bool `json:"hours12"`

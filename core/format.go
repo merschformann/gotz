@@ -54,6 +54,8 @@ var NamedColors = map[string]string{
 	"cyan":    ColorCyan,
 }
 
+// getStaticColorMap returns a map of static colors for the given style
+// configuration.
 func getStaticColorMap(sty PlotColors) map[ContextType]string {
 	// Define lookup function
 	getColor := func(colorValue string) string {
@@ -103,7 +105,8 @@ func colorizeStatic(style Style, hour int, message string) string {
 
 // Define symbol modes
 const (
-	// SymbolModeRectangles uses different kinds of rectangles to represent the hours.
+	// SymbolModeRectangles uses different kinds of rectangles to represent the
+	// hours
 	SymbolModeRectangles = "rectangles"
 	// SymbolModeSunMoon uses the sun and moon symbols to represent the hours.
 	SymbolModeSunMoon = "sun-moon"
@@ -114,7 +117,8 @@ const (
 	SymbolModeDefault = SymbolModeRectangles
 )
 
-// checkSymbolMode checks whether the given symbol mode is valid (true if valid).
+// checkSymbolMode checks whether the given symbol mode is valid (true if
+// valid).
 func checkSymbolMode(mode string) bool {
 	switch mode {
 	case SymbolModeRectangles, SymbolModeSunMoon, SymbolModeMono:
