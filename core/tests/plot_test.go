@@ -26,6 +26,9 @@ func readExpectation(goldenFile string) (string, error) {
 }
 
 func TestPlotStatic(t *testing.T) {
+	// Set local time to UTC for reproducibility
+	time.Local = time.UTC
+
 	// Define expected output
 	goldenFile := "testdata/plot_static.golden"
 	expected, err := readExpectation(goldenFile)
