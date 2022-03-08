@@ -58,6 +58,8 @@ var NamedStaticColors = map[string]string{
 	"cyan":    ColorCyan,
 }
 
+// getDynamicColorMap returns a map of dynamic colors for the given style
+// configuration.
 func getDynamicColorMap(sty PlotColors) map[ContextType]tcell.Style {
 	// Define lookup function
 	getColor := func(colorValue string) tcell.Color {
@@ -111,32 +113,6 @@ func getStaticColorMap(sty PlotColors) map[ContextType]string {
 	staticColorMap[ContextEvening] = getColor(sty.StaticColorEvening)
 	staticColorMap[ContextNight] = getColor(sty.StaticColorNight)
 	return staticColorMap
-}
-
-// colorizeStatic colorizes the given string with the given color. Uses terminal
-// color codes or named colors reflecting the same.
-func colorizeStatic(style Style, hour int, message string) string {
-	// Define coloring function using terminal color codes
-	colorize := func(color string) string {
-		if c, ok := NamedStaticColors[color]; ok {
-			return fmt.Sprint(string(c), message, ColorReset)
-		}
-		return fmt.Sprint(string(color), message, string(ColorReset))
-	}
-	// Colorize depending on segment in day
-	segment := getDaySegment(style.DaySegmentation, hour)
-	switch segment {
-	case ContextMorning:
-		return colorize(style.Coloring.StaticColorMorning)
-	case ContextDay:
-		return colorize(style.Coloring.StaticColorDay)
-	case ContextEvening:
-		return colorize(style.Coloring.StaticColorEvening)
-	case ContextNight:
-		return colorize(style.Coloring.StaticColorNight)
-	default:
-		panic(fmt.Sprintf("invalid segment: %s", segment))
-	}
 }
 
 // Define symbol modes

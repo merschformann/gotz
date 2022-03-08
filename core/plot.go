@@ -13,11 +13,11 @@ type timeslot struct {
 	Time time.Time
 }
 
-// plotter compiles functionality & configuration for plotting.
-type plotter struct {
-	plotLine      func(t ContextType, msgs ...interface{}) // func for plotting a line (with line-break)
-	plotString    func(t ContextType, msg string)          // func for plotting simple strings
-	terminalWidth int                                      // Terminal width
+// Plotter compiles functionality & configuration for plotting.
+type Plotter struct {
+	PlotLine      func(t ContextType, msgs ...interface{}) // func for plotting a line (with line-break)
+	PlotString    func(t ContextType, msg string)          // func for plotting simple strings
+	TerminalWidth int                                      // Terminal width
 	modeStatic    bool                                     // Whether to plot static or live
 	now           bool                                     // Whether to plot the current time
 }
@@ -54,7 +54,10 @@ func Plot(c Config, t time.Time) error {
 	if c.Live {
 		// --> Plot time using tcell
 		// Initialize styles
-		styles := getDynamicColorMap(c.Style.Coloring)
+		styles := map[ContextType]tcell.Style{}
+		if c.Style.Colorize {
+			styles = getDynamicColorMap(c.Style.Coloring)
+		}
 
 		// Initialize screen
 		s, err := tcell.NewScreen()
@@ -76,30 +79,41 @@ func Plot(c Config, t time.Time) error {
 		// Define plotting functions for tcell
 		x, y := 0, 0
 		plotLine := func(t ContextType, msgs ...interface{}) {
+			// Get style
+			style := tcell.StyleDefault
+			if c.Style.Colorize {
+				style = styles[t]
+			}
 			// Print message
 			for _, msg := range msgs {
 				for _, r := range fmt.Sprint(msg) {
-					s.SetContent(x, y, r, nil, styles[t])
+					s.SetContent(x, y, r, nil, style)
 					x++
 				}
 			}
 			// Fill previous line to the end
 			for i := x; i < width; i++ {
-				s.SetContent(i, y, ' ', nil, styles[t])
+				s.SetContent(i, y, ' ', nil, style)
 			}
 			// Move cursor to next line
 			x = 0
 			y++
 		}
 		plotString := func(t ContextType, msg string) {
+			// Get style
+			style := tcell.StyleDefault
+			if c.Style.Colorize {
+				style = styles[t]
+			}
+			// Print message
 			for i, r := range fmt.Sprint(msg) {
-				s.SetContent(x+i, y, r, nil, styles[t])
+				s.SetContent(x+i, y, r, nil, style)
 				x++
 			}
 		}
 
 		// Prepare plotter
-		plt := plotter{plotLine: plotLine, plotString: plotString, now: true}
+		plt := Plotter{PlotLine: plotLine, PlotString: plotString, now: true}
 
 		// Refresh time periodically
 		updateTimeout := time.Duration(40) * time.Millisecond
@@ -114,10 +128,10 @@ func Plot(c Config, t time.Time) error {
 				width, height = w, h
 				now = t
 				x, y = 0, 0
-				plt.terminalWidth = w
+				plt.TerminalWidth = w
 				// Refresh time (pass zero time to indicate now should be used)
 				s.Clear()
-				err := plotTime(plt, c, now)
+				err := PlotTime(plt, c, now)
 				if err != nil {
 					return err
 				}
@@ -153,19 +167,19 @@ func Plot(c Config, t time.Time) error {
 		// --> Plot time using fmt
 		// Prepare plotter
 		colorMap := getStaticColorMap(c.Style.Coloring)
-		plt := plotter{
+		plt := Plotter{
 			now:           t.IsZero(),
-			terminalWidth: getTerminalWidth(),
-			plotLine: func(t ContextType, line ...interface{}) {
-				if c, ok := colorMap[t]; ok && c != "" {
-					fmt.Println(c + fmt.Sprint(line) + ColorReset)
+			TerminalWidth: getTerminalWidth(),
+			PlotLine: func(t ContextType, line ...interface{}) {
+				if ch, ok := colorMap[t]; ok && ch != "" && c.Style.Colorize {
+					fmt.Println(ch + fmt.Sprint(line) + ColorReset)
 				} else {
 					fmt.Println(line...)
 				}
 			},
-			plotString: func(t ContextType, msg string) {
-				if c, ok := colorMap[t]; ok && c != "" {
-					fmt.Print(c + fmt.Sprint(msg) + ColorReset)
+			PlotString: func(t ContextType, msg string) {
+				if ch, ok := colorMap[t]; ok && ch != "" && c.Style.Colorize {
+					fmt.Print(ch + fmt.Sprint(msg) + ColorReset)
 				} else {
 					fmt.Print(msg)
 				}
@@ -176,7 +190,7 @@ func Plot(c Config, t time.Time) error {
 			t = time.Now()
 		}
 		// Plot
-		err := plotTime(plt, c, t)
+		err := PlotTime(plt, c, t)
 		if err != nil {
 			return err
 		}
@@ -185,10 +199,10 @@ func Plot(c Config, t time.Time) error {
 	return nil
 }
 
-// plotTime plots the time on the terminal.
-func plotTime(plt plotter, cfg Config, t time.Time) error {
+// PlotTime plots the time on the terminal.
+func PlotTime(plt Plotter, cfg Config, t time.Time) error {
 	// Get terminal width
-	width := plt.terminalWidth
+	width := plt.TerminalWidth
 	// Set hours to plot
 	hours := 24
 	// Get terminal width
@@ -200,12 +214,12 @@ func plotTime(plt plotter, cfg Config, t time.Time) error {
 	nowSlot := width / 2
 	slotMinutes := hours * 60 / width
 	offsetMinutes := slotMinutes * width / 2
-	// Print header
+	// Plot header
 	nowDescription := "now"
 	if !plt.now {
 		nowDescription = "time"
 	}
-	plt.plotLine(
+	plt.PlotLine(
 		ContextNormal,
 		strings.Repeat(" ",
 			nowSlot-(len(nowDescription)+1))+
@@ -240,7 +254,7 @@ func plotTime(plt plotter, cfg Config, t time.Time) error {
 
 	// Plot all timezones
 	for i := range timezones {
-		// Print header
+		// --> Plot header
 		desc := fmt.Sprintf("%-*s", descriptionLength, descriptions[i])
 		desc = fmt.Sprintf(
 			"%s: %s %s",
@@ -250,7 +264,8 @@ func plotTime(plt plotter, cfg Config, t time.Time) error {
 		if len(desc)-1 < nowSlot {
 			desc = desc + strings.Repeat(" ", nowSlot-len(desc)) + "|"
 		}
-		plt.plotLine(ContextNormal, desc)
+		plt.PlotLine(ContextNormal, desc)
+		// --> Plot timeslots
 		for j := 0; j < width; j++ {
 			// Convert to tz time
 			tzTime := timeSlots[j].Time.In(timezones[i])
@@ -258,19 +273,15 @@ func plotTime(plt plotter, cfg Config, t time.Time) error {
 			s := GetHourSymbol(cfg.Style, tzTime.Hour())
 			// Get segment type of slot
 			seg := getDaySegment(cfg.Style.DaySegmentation, tzTime.Hour())
-			// Colorize statically if requested
-			if cfg.Style.Colorize && plt.modeStatic {
-				colorizeStatic(cfg.Style, tzTime.Hour(), s)
-			}
 			if j == nowSlot {
 				s = "|"
 			}
-			plt.plotString(seg, s)
+			plt.PlotString(seg, s)
 		}
-		plt.plotLine(ContextNormal)
+		plt.PlotLine(ContextNormal)
 	}
 
-	// Print tics
+	// Plot tics
 	if cfg.Tics {
 		plotTics(plt, cfg.Hours12, timeSlots, width)
 	}
@@ -279,7 +290,7 @@ func plotTime(plt plotter, cfg Config, t time.Time) error {
 }
 
 // plotTics adds tics to the plot.
-func plotTics(plt plotter, hours12 bool, timeSlots []timeslot, width int) {
+func plotTics(plt Plotter, hours12 bool, timeSlots []timeslot, width int) {
 	// Prepare tics
 	tics := make([]string, width)
 	currentHour := -1
@@ -295,23 +306,23 @@ func plotTics(plt plotter, hours12 bool, timeSlots []timeslot, width int) {
 			currentHour = hour.Hour()
 		}
 	}
-	// Print tics
+	// Plot tics
 	for i := 0; i < width; i++ {
 		if tics[i] != "" {
-			plt.plotString(ContextNormal, "^")
+			plt.PlotString(ContextNormal, "^")
 		} else {
-			plt.plotString(ContextNormal, " ")
+			plt.PlotString(ContextNormal, " ")
 		}
 	}
-	plt.plotLine(ContextNormal)
-	// Print tics
+	plt.PlotLine(ContextNormal)
+	// Plot tics
 	for i := 0; i < width; i++ {
 		if tics[i] != "" && i+len(tics[i]) < width {
-			plt.plotString(ContextNormal, tics[i])
+			plt.PlotString(ContextNormal, tics[i])
 			i += len(tics[i]) - 1
 		} else {
-			plt.plotString(ContextNormal, " ")
+			plt.PlotString(ContextNormal, " ")
 		}
 	}
-	plt.plotLine(ContextNormal)
+	plt.PlotLine(ContextNormal)
 }
