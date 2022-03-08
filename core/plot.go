@@ -53,6 +53,9 @@ func formatDay(twelve bool, t time.Time) string {
 func Plot(c Config, t time.Time) error {
 	if c.Live {
 		// --> Plot time using tcell
+		// Initialize styles
+		styles := getDynamicColorMap(c.Style.Coloring)
+
 		// Initialize screen
 		s, err := tcell.NewScreen()
 		if err != nil {
@@ -66,31 +69,29 @@ func Plot(c Config, t time.Time) error {
 			os.Exit(0)
 		}
 
-		// Initialize styles
-		styles := map[ContextType]tcell.Style{
-			ContextBackground: tcell.StyleDefault.Background(tcell.ColorBlack),
-			ContextForeground: tcell.StyleDefault.Foreground(tcell.ColorWhite),
-			ContextMorning:    tcell.StyleDefault.Foreground(tcell.ColorGreen),
-			ContextDay:        tcell.StyleDefault.Foreground(tcell.ColorYellow),
-			ContextEvening:    tcell.StyleDefault.Foreground(tcell.ColorRed),
-			ContextNight:      tcell.StyleDefault.Foreground(tcell.ColorBlue),
-		}
+		// Track update events
+		width, height := s.Size()
+		now := time.Time{} // Requested time is discarded in live mode; first 'now' is set to trigger refresh
 
 		// Define plotting functions for tcell
 		x, y := 0, 0
 		plotLine := func(t ContextType, msgs ...interface{}) {
+			// Print message
 			for _, msg := range msgs {
-				fmt.Println(msg)
 				for _, r := range fmt.Sprint(msg) {
 					s.SetContent(x, y, r, nil, styles[t])
 					x++
 				}
 			}
+			// Fill previous line to the end
+			for i := x; i < width; i++ {
+				s.SetContent(i, y, ' ', nil, styles[t])
+			}
+			// Move cursor to next line
 			x = 0
 			y++
 		}
 		plotString := func(t ContextType, msg string) {
-			fmt.Println(msg)
 			for i, r := range fmt.Sprint(msg) {
 				s.SetContent(x+i, y, r, nil, styles[t])
 				x++
@@ -99,10 +100,6 @@ func Plot(c Config, t time.Time) error {
 
 		// Prepare plotter
 		plt := plotter{plotLine: plotLine, plotString: plotString, now: true}
-
-		// Track update events
-		width, height := s.Size()
-		now := time.Time{} // Requested time is discarded in live mode; first 'now' is set to trigger refresh
 
 		// Refresh time periodically
 		updateTimeout := time.Duration(40) * time.Millisecond
@@ -123,6 +120,12 @@ func Plot(c Config, t time.Time) error {
 				err := plotTime(plt, c, now)
 				if err != nil {
 					return err
+				}
+				// Fill remaining lines
+				for i := y; i < h; i++ {
+					for j := 0; j < w; j++ {
+						s.SetContent(j, i, ' ', nil, styles[ContextNormal])
+					}
 				}
 				// Update screen
 				s.Sync()
@@ -203,7 +206,7 @@ func plotTime(plt plotter, cfg Config, t time.Time) error {
 		nowDescription = "time"
 	}
 	plt.plotLine(
-		ContextForeground,
+		ContextNormal,
 		strings.Repeat(" ",
 			nowSlot-(len(nowDescription)+1))+
 			nowDescription+" v "+
@@ -247,7 +250,7 @@ func plotTime(plt plotter, cfg Config, t time.Time) error {
 		if len(desc)-1 < nowSlot {
 			desc = desc + strings.Repeat(" ", nowSlot-len(desc)) + "|"
 		}
-		plt.plotLine(ContextForeground, desc)
+		plt.plotLine(ContextNormal, desc)
 		for j := 0; j < width; j++ {
 			// Convert to tz time
 			tzTime := timeSlots[j].Time.In(timezones[i])
@@ -264,7 +267,7 @@ func plotTime(plt plotter, cfg Config, t time.Time) error {
 			}
 			plt.plotString(seg, s)
 		}
-		plt.plotLine(ContextForeground)
+		plt.plotLine(ContextNormal)
 	}
 
 	// Print tics
@@ -295,20 +298,20 @@ func plotTics(plt plotter, hours12 bool, timeSlots []timeslot, width int) {
 	// Print tics
 	for i := 0; i < width; i++ {
 		if tics[i] != "" {
-			plt.plotString(ContextForeground, "^")
+			plt.plotString(ContextNormal, "^")
 		} else {
-			plt.plotString(ContextForeground, " ")
+			plt.plotString(ContextNormal, " ")
 		}
 	}
-	plt.plotLine(ContextForeground)
+	plt.plotLine(ContextNormal)
 	// Print tics
 	for i := 0; i < width; i++ {
 		if tics[i] != "" && i+len(tics[i]) < width {
-			plt.plotString(ContextForeground, tics[i])
+			plt.plotString(ContextNormal, tics[i])
 			i += len(tics[i]) - 1
 		} else {
-			plt.plotString(ContextForeground, " ")
+			plt.plotString(ContextNormal, " ")
 		}
 	}
-	plt.plotLine(ContextForeground)
+	plt.plotLine(ContextNormal)
 }

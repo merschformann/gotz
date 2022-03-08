@@ -1,16 +1,20 @@
 package core
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+
+	"github.com/gdamore/tcell/v2"
+)
 
 type ContextType string
 
 const (
-	ContextForeground ContextType = "foreground"
-	ContextBackground ContextType = "background"
-	ContextMorning    ContextType = "morning"
-	ContextDay        ContextType = "day"
-	ContextEvening    ContextType = "evening"
-	ContextNight      ContextType = "night"
+	ContextNormal  ContextType = "normal"
+	ContextMorning ContextType = "morning"
+	ContextDay     ContextType = "day"
+	ContextEvening ContextType = "evening"
+	ContextNight   ContextType = "night"
 )
 
 // getDaySegment returns the day segment for the given hour.
@@ -42,8 +46,8 @@ const (
 	ColorReset   string = "\u001b[0m"
 )
 
-// NamedColors defines all terminal colors supported by name.
-var NamedColors = map[string]string{
+// NamedStaticColors defines all terminal colors supported by name.
+var NamedStaticColors = map[string]string{
 	"black":   ColorBlack,
 	"white":   ColorWhite,
 	"red":     ColorRed,
@@ -54,13 +58,46 @@ var NamedColors = map[string]string{
 	"cyan":    ColorCyan,
 }
 
+func getDynamicColorMap(sty PlotColors) map[ContextType]tcell.Style {
+	// Define lookup function
+	getColor := func(colorValue string) tcell.Color {
+		// Check if color is hex color
+		if strings.HasPrefix(colorValue, "#") {
+			return tcell.GetColor(strings.ToLower(colorValue))
+		}
+		// Check if color is a named color
+		if c, ok := tcell.ColorNames[strings.ToLower(colorValue)]; ok {
+			return c
+		}
+		// Use default color
+		return tcell.ColorDefault
+	}
+	// Get default foreground / background
+	fg, bg, _ := tcell.StyleDefault.Decompose()
+	if sty.DynamicColorForeground != "" {
+		fg = getColor(sty.DynamicColorForeground)
+	}
+	if sty.DynamicColorBackground != "" {
+		bg = getColor(sty.DynamicColorBackground)
+	}
+	baseStyle := tcell.StyleDefault.Background(bg).Foreground(fg)
+	// Create dynamic color map
+	dynamicColorMap := make(map[ContextType]tcell.Style)
+	dynamicColorMap[ContextNormal] = baseStyle
+	dynamicColorMap[ContextMorning] = baseStyle.Foreground(getColor(sty.DynamicColorMorning))
+	dynamicColorMap[ContextDay] = baseStyle.Foreground(getColor(sty.DynamicColorDay))
+	dynamicColorMap[ContextEvening] = baseStyle.Foreground(getColor(sty.DynamicColorEvening))
+	dynamicColorMap[ContextNight] = baseStyle.Foreground(getColor(sty.DynamicColorNight))
+	return dynamicColorMap
+}
+
 // getStaticColorMap returns a map of static colors for the given style
 // configuration.
 func getStaticColorMap(sty PlotColors) map[ContextType]string {
 	// Define lookup function
 	getColor := func(colorValue string) string {
 		// Check if color is a named color
-		if color, ok := NamedColors[colorValue]; ok {
+		if color, ok := NamedStaticColors[colorValue]; ok {
 			return color
 		}
 		// At this point color must be a valid terminal color code
@@ -68,8 +105,7 @@ func getStaticColorMap(sty PlotColors) map[ContextType]string {
 	}
 	// Create static color map
 	staticColorMap := make(map[ContextType]string)
-	staticColorMap[ContextForeground] = getColor(sty.StaticColorForeground)
-	staticColorMap[ContextBackground] = "" // No coloring of background
+	staticColorMap[ContextNormal] = getColor(sty.StaticColorForeground) // Override of background not supported in static mode
 	staticColorMap[ContextMorning] = getColor(sty.StaticColorMorning)
 	staticColorMap[ContextDay] = getColor(sty.StaticColorDay)
 	staticColorMap[ContextEvening] = getColor(sty.StaticColorEvening)
@@ -82,7 +118,7 @@ func getStaticColorMap(sty PlotColors) map[ContextType]string {
 func colorizeStatic(style Style, hour int, message string) string {
 	// Define coloring function using terminal color codes
 	colorize := func(color string) string {
-		if c, ok := NamedColors[color]; ok {
+		if c, ok := NamedStaticColors[color]; ok {
 			return fmt.Sprint(string(c), message, ColorReset)
 		}
 		return fmt.Sprint(string(color), message, string(ColorReset))
