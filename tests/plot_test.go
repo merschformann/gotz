@@ -27,7 +27,7 @@ func readExpectation(goldenFile string) (string, error) {
 	return string(expected), nil
 }
 
-func TestMatrixStatic(t *testing.T) {
+func TestTableStatic(t *testing.T) {
 	// Get all test configurations
 	testConfigurations, err := filepath.Glob("testdata/*.json")
 	if err != nil {
