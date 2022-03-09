@@ -45,7 +45,7 @@ func TestMatrixStatic(t *testing.T) {
 	sb := strings.Builder{}
 	plotter := core.Plotter{
 		Now:           true,
-		TerminalWidth: 80,
+		TerminalWidth: 72,
 		PlotLine: func(t core.ContextType, line ...interface{}) {
 			_ = t
 			sb.WriteString(fmt.Sprint(line...) + "\n")
@@ -75,7 +75,7 @@ func TestMatrixStatic(t *testing.T) {
 			// Get expected output
 			goldenFile := strings.Replace(configFile, ".json", ".golden", -1)
 			expected, err := readExpectation(goldenFile)
-			if err != nil {
+			if err != nil && !*update {
 				t.Fatal(err)
 			}
 			// Create plot
