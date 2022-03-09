@@ -54,7 +54,7 @@ func formatDay(twelve bool, t time.Time) string {
 // Plot is the main plotting function. It either plots to the terminal in a
 // conventional way or uses tcell for providing a continuously updating plot.
 func Plot(c Config, t time.Time) error {
-	if c.Live {
+	if c.Live && t.IsZero() /* Only enter live mode if no time was requested */ {
 		// --> Plot time using tcell
 		// Initialize styles
 		styles := map[ContextType]tcell.Style{}

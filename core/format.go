@@ -102,6 +102,14 @@ func getStaticColorMap(sty PlotColors) map[ContextType]string {
 		if color, ok := NamedStaticColors[colorValue]; ok {
 			return color
 		}
+		// Check if color is hex color
+		if strings.HasPrefix(colorValue, "#") {
+			r, g, b, err := convertHexToRgb(strings.ToLower(colorValue))
+			if err != nil {
+				panic(err)
+			}
+			return fmt.Sprintf("\u001b[38;2;%d;%d;%dm", r, g, b)
+		}
 		// At this point color must be a valid terminal color code
 		return colorValue
 	}
