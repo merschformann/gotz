@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -27,11 +28,10 @@ func readExpectation(goldenFile string) (string, error) {
 }
 
 func TestMatrixStatic(t *testing.T) {
-	// --> Define test cases
-	testCases := []struct {
-		name string
-	}{
-		{name: "static_default"},
+	// Get all test configurations
+	testConfigurations, err := filepath.Glob("testdata/*.json")
+	if err != nil {
+		t.Fatal(err)
 	}
 
 	// Set local time to UTC for reproducibility
@@ -57,12 +57,10 @@ func TestMatrixStatic(t *testing.T) {
 	}
 
 	// Run all tests
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
+	for _, configFile := range testConfigurations {
+		t.Run(strings.Replace(configFile, ".json", "", -1), func(t *testing.T) {
 			// Reset stringbuilder
 			sb.Reset()
-			// Read config for test case
-			configFile := fmt.Sprintf("testdata/%s.json", tc.name)
 			// Read configuration file
 			var config core.Config
 			data, err := ioutil.ReadFile(configFile)
@@ -75,7 +73,7 @@ func TestMatrixStatic(t *testing.T) {
 				t.Fatal(err)
 			}
 			// Get expected output
-			goldenFile := fmt.Sprintf("testdata/%s.golden", tc.name)
+			goldenFile := strings.Replace(configFile, ".json", ".golden", -1)
 			expected, err := readExpectation(goldenFile)
 			if err != nil {
 				t.Fatal(err)
