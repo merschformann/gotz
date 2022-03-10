@@ -9,51 +9,88 @@ import (
 	"time"
 )
 
+// ConfigVersion is the current version of the configuration file.
+const ConfigVersion = "1.0"
+
 // Config is the configuration struct.
 type Config struct {
-	// Day segmentation
-	DaySegments DaySegmentation `json:"day_segments"`
-	// All timezones to display
+	// Version is the version of the configuration file.
+	ConfigVersion string `json:"config_version"`
+
+	// All timezones to display.
 	Timezones []Location `json:"timezones"`
 
-	// Symbol mode
-	Symbols string `json:"symbols"`
-	// Indicates whether to plot tics on the time axis
+	// Style defines the style of the timezone plot.
+	Style Style `json:"style"`
+
+	// Indicates whether to plot tics on the time axis.
 	Tics bool `json:"tics"`
-	// Indicates whether to stretch across the terminal width at cost of accuracy
+	// Indicates whether to stretch across the terminal width at cost of
+	// accuracy.
 	Stretch bool `json:"stretch"`
-	// Indicates whether to colorize the symbols
-	Colorize bool `json:"colorize"`
-	// Indicates whether to use the 24-hour clock
+	// Indicates whether to use the 24-hour clock.
 	Hours12 bool `json:"hours12"`
+
+	// Indicates whether to continuously update.
+	Live bool `json:"live"`
 }
 
 // Location describes a timezone the user wants to display.
 type Location struct {
-	// Descriptive name of the timezone
+	// Descriptive name of the timezone.
 	Name string
-	// Machine-readable timezone name
+	// Machine-readable timezone name.
 	TZ string
+}
+
+type Style struct {
+	// Defines the symbols to be used.
+	Symbols string `json:"symbols"`
+	// Indicates whether to use colors.
+	Colorize bool `json:"colorize"`
+	// Defines how the day is split up into different ranges.
+	DaySegmentation DaySegmentation `json:"day_segments"`
+	// Defines the colors to be used in the plot.
+	Coloring PlotColors `json:"coloring"`
 }
 
 // DaySegmentation defines how to segment the day.
 type DaySegmentation struct {
 	// MorningHour is the hour at which the morning starts.
 	MorningHour int `json:"morning"`
-	// MorningColor is the color to use for the morning segment.
-	MorningColor string `json:"morning_color"`
 	// DayHour is the hour at which the day starts (basically business hours).
 	DayHour int `json:"day"`
-	// DayColor is the color to use for the day segment.
-	DayColor string `json:"day_color"`
 	// EveningHour is the hour at which the evening starts.
 	EveningHour int `json:"evening"`
-	// EveningColor is the color to use for the evening segment.
-	EveningColor string `json:"evening_color"`
 	// NightHour is the hour at which the night starts.
 	NightHour int `json:"night"`
-	// NightColor is the color to use for the night segment.
-	NightColor string `json:"night_color"`
+}
+
+// PlotColors defines the colors to be used in the plot.
+type PlotColors struct {
+	// StaticColorMorning is the color to use for the morning segment.
+	StaticColorMorning string
+	// StaticColorDay is the color to use for the day segment.
+	StaticColorDay string
+	// StaticColorEvening is the color to use for the evening segment.
+	StaticColorEvening string
+	// StaticColorNight is the color to use for the night segment.
+	StaticColorNight string
+	// StaticColorForeground is the color to use for the foreground.
+	StaticColorForeground string
+
+	// DynamicColorMorning is the color to use for the morning segment (in live mode).
+	DynamicColorMorning string
+	// DynamicColorDay is the color to use for the morning segment (in live mode).
+	DynamicColorDay string
+	// DynamicColorEvening is the color to use for the morning segment (in live mode).
+	DynamicColorEvening string
+	// DynamicColorNight is the color to use for the morning segment (in live mode).
+	DynamicColorNight string
+	// DynamicColorForeground is the color to use for the foreground (in live mode).
+	DynamicColorForeground string
+	// DynamicColorBackground is the color to use for the background (in live mode).
+	DynamicColorBackground string
 }
 
 // DefaultConfig configuration generator.
@@ -70,18 +107,31 @@ func DefaultConfig() Config {
 	tzs = append(tzs, Location{"Sydney", sydney.String()})
 	// Return default configuration
 	return Config{
-		Timezones: tzs,
-		DaySegments: DaySegmentation{
-			MorningHour:  6,
-			MorningColor: "red",
-			DayHour:      8,
-			DayColor:     "yellow",
-			EveningHour:  18,
-			EveningColor: "blue",
-			NightHour:    22,
-			NightColor:   "red",
+		ConfigVersion: ConfigVersion,
+		Timezones:     tzs,
+		Style: Style{
+			Symbols:  SymbolModeDefault,
+			Colorize: false,
+			DaySegmentation: DaySegmentation{
+				MorningHour: 6,
+				DayHour:     8,
+				EveningHour: 18,
+				NightHour:   22,
+			},
+			Coloring: PlotColors{
+				StaticColorMorning:     "red",
+				StaticColorDay:         "yellow",
+				StaticColorEvening:     "red",
+				StaticColorNight:       "blue",
+				StaticColorForeground:  "", // don't override terminal foreground color
+				DynamicColorMorning:    "red",
+				DynamicColorDay:        "yellow",
+				DynamicColorEvening:    "red",
+				DynamicColorNight:      "blue",
+				DynamicColorForeground: "", // don't override foreground color
+				DynamicColorBackground: "", // don't override background color
+			},
 		},
-		Symbols: SymbolModeDefault,
 		Tics:    false,
 		Stretch: true,
 	}
@@ -115,6 +165,15 @@ func Load() (Config, error) {
 		fmt.Println("Error unmarshaling config file (replacing with default config):", err)
 		return saveDefault()
 	}
+	// Check version
+	if config.ConfigVersion != ConfigVersion {
+		version := config.ConfigVersion
+		if version == "" {
+			version = "unknown"
+		}
+		fmt.Println("Configuration file version mismatch (replacing with default config), version found:", version)
+		return saveDefault()
+	}
 	// Validate (replace invalid values with defaults)
 	config = config.validate()
 	return config, nil
@@ -128,8 +187,8 @@ func saveDefault() (Config, error) {
 
 // Save configuration to file.
 func (c *Config) Save() error {
-	// Marshal
-	data, err := json.Marshal(c)
+	// Marshal and pretty-print
+	data, err := json.MarshalIndent(c, "", "  ")
 	if err != nil {
 		return err
 	}
@@ -144,9 +203,9 @@ func (c *Config) Save() error {
 // validate validates the configuration.
 func (c Config) validate() Config {
 	// Check whether symbol mode is known
-	if !checkSymbolMode(c.Symbols) {
-		fmt.Printf("Warning - invalid symbols (using default): %s\n", c.Symbols)
-		c.Symbols = SymbolModeDefault
+	if !checkSymbolMode(c.Style.Symbols) {
+		fmt.Printf("Warning - invalid symbols (using default): %s\n", c.Style.Symbols)
+		c.Style.Symbols = SymbolModeDefault
 	}
 	return c
 }

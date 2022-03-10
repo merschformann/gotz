@@ -7,18 +7,12 @@ import (
 	"time"
 )
 
-// request defines per invokation options.
-type Request struct {
-	// Time to display
-	Time *time.Time
-}
-
 // parseArgs parses the command line arguments and applies them to the given configuration.
-func ParseFlags(startConfig Config) (Config, Request, bool, error) {
+func ParseFlags(startConfig Config) (Config, time.Time, bool, error) {
 	// Check for any changes
 	var changed bool
 	// Define configuration flags
-	var timezones, symbols, tics, stretch, colorize, hours12 string
+	var timezones, symbols, tics, stretch, colorize, hours12, live string
 	flag.StringVar(
 		&timezones,
 		"timezones",
@@ -59,9 +53,16 @@ func ParseFlags(startConfig Config) (Config, Request, bool, error) {
 		"",
 		"indicates whether to use 12-hour clock (one of: true, false)",
 	)
+	flag.StringVar(
+		&live,
+		"live",
+		"",
+		"indicates whether to display time live (quit via 'q' or 'Ctrl+C') (one of: true, false)",
+	)
 
 	// Define direct flags
 	var requestTime string
+	var t time.Time = time.Time{}
 	flag.StringVar(
 		&requestTime,
 		"time",
@@ -77,15 +78,15 @@ func ParseFlags(startConfig Config) (Config, Request, bool, error) {
 		changed = true
 		tzs, err := parseTimezones(timezones)
 		if err != nil {
-			return startConfig, Request{}, changed, err
+			return startConfig, time.Time{}, changed, err
 		}
 		startConfig.Timezones = tzs
 	}
 	if symbols != "" {
 		changed = true
-		startConfig.Symbols = symbols
-		if !checkSymbolMode(startConfig.Symbols) {
-			return startConfig, Request{}, false, fmt.Errorf("invalid symbol mode: %s", symbols)
+		startConfig.Style.Symbols = symbols
+		if !checkSymbolMode(startConfig.Style.Symbols) {
+			return startConfig, time.Time{}, false, fmt.Errorf("invalid symbol mode: %s", symbols)
 		}
 	}
 	if tics != "" {
@@ -95,7 +96,7 @@ func ParseFlags(startConfig Config) (Config, Request, bool, error) {
 		} else if strings.ToLower(tics) == "false" {
 			startConfig.Tics = false
 		} else {
-			return startConfig, Request{}, changed, fmt.Errorf("invalid value for tics: %s", tics)
+			return startConfig, time.Time{}, changed, fmt.Errorf("invalid value for tics: %s", tics)
 		}
 	}
 	if stretch != "" {
@@ -105,17 +106,17 @@ func ParseFlags(startConfig Config) (Config, Request, bool, error) {
 		} else if strings.ToLower(stretch) == "false" {
 			startConfig.Stretch = false
 		} else {
-			return startConfig, Request{}, changed, fmt.Errorf("invalid value for stretch: %s", stretch)
+			return startConfig, time.Time{}, changed, fmt.Errorf("invalid value for stretch: %s", stretch)
 		}
 	}
 	if colorize != "" {
 		changed = true
 		if strings.ToLower(colorize) == "true" {
-			startConfig.Colorize = true
+			startConfig.Style.Colorize = true
 		} else if strings.ToLower(colorize) == "false" {
-			startConfig.Colorize = false
+			startConfig.Style.Colorize = false
 		} else {
-			return startConfig, Request{}, changed, fmt.Errorf("invalid value for colorize: %s", colorize)
+			return startConfig, time.Time{}, changed, fmt.Errorf("invalid value for colorize: %s", colorize)
 		}
 	}
 	if hours12 != "" {
@@ -125,20 +126,28 @@ func ParseFlags(startConfig Config) (Config, Request, bool, error) {
 		} else if strings.ToLower(hours12) == "false" {
 			startConfig.Hours12 = false
 		} else {
-			return startConfig, Request{}, changed, fmt.Errorf("invalid value for hours12: %s", hours12)
+			return startConfig, time.Time{}, changed, fmt.Errorf("invalid value for hours12: %s", hours12)
+		}
+	}
+	if live != "" {
+		changed = true
+		if strings.ToLower(live) == "true" {
+			startConfig.Live = true
+		} else if strings.ToLower(live) == "false" {
+			startConfig.Live = false
+		} else {
+			return startConfig, time.Time{}, changed, fmt.Errorf("invalid value for live: %s", live)
 		}
 	}
 
 	// Handle direct flags
-	var request Request
 	if requestTime != "" {
-		changed = true
 		// Parse time
-		t, err := parseTime(requestTime)
+		rTime, err := parseTime(requestTime)
 		if err != nil {
-			return startConfig, Request{}, changed, err
+			return startConfig, time.Time{}, changed, err
 		}
-		request.Time = &t
+		t = rTime
 	}
 
 	// Handle last argument as time, if it starts with a digit
@@ -148,15 +157,15 @@ func ParseFlags(startConfig Config) (Config, Request, bool, error) {
 		// If last argument is a time, parse it
 		if len(lastArg) > 0 && lastArg[0] >= '0' && lastArg[0] <= '9' {
 			// Parse time
-			t, err := parseTime(lastArg)
+			rTime, err := parseTime(lastArg)
 			if err != nil {
-				return startConfig, Request{}, changed, err
+				return startConfig, time.Time{}, changed, err
 			}
-			request.Time = &t
+			t = rTime
 		}
 	}
 
-	return startConfig, request, changed, nil
+	return startConfig, t, changed, nil
 }
 
 // parseTimezones parses a comma-separated list of timezones.
@@ -201,8 +210,8 @@ func checkTimezoneLocation(timezone string) bool {
 	return err == nil
 }
 
-// InputTimeFormat defines accepted time formats.
-type InputTimeFormat struct {
+// inputTimeFormat defines accepted time formats.
+type inputTimeFormat struct {
 	// The format string.
 	Format string
 	// Indicates whether the input declared a date too.
@@ -214,7 +223,7 @@ type InputTimeFormat struct {
 // parseTime parses a time string.
 func parseTime(t string) (time.Time, error) {
 	// Try all supported formats
-	for _, format := range []InputTimeFormat{
+	for _, format := range []inputTimeFormat{
 		{"15", false, false},
 		{"15:04", false, false},
 		{"15:04:05", false, false},

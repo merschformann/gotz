@@ -1,0 +1,48 @@
+{
+    "config_version": "1.0",
+    "timezones": [
+        {
+            "Name": "New York",
+            "TZ": "America/New_York"
+        },
+        {
+            "Name": "Berlin",
+            "TZ": "Europe/Berlin"
+        },
+        {
+            "Name": "Shanghai",
+            "TZ": "Asia/Shanghai"
+        },
+        {
+            "Name": "Sydney",
+            "TZ": "Australia/Sydney"
+        }
+    ],
+    "style": {
+        "symbols": "rectangles",
+        "colorize": false,
+        "day_segments": {
+            "morning": 6,
+            "day": 8,
+            "evening": 18,
+            "night": 22
+        },
+        "coloring": {
+            "StaticColorMorning": "red",
+            "StaticColorDay": "yellow",
+            "StaticColorEvening": "red",
+            "StaticColorNight": "blue",
+            "StaticColorForeground": "",
+            "DynamicColorMorning": "red",
+            "DynamicColorDay": "yellow",
+            "DynamicColorEvening": "red",
+            "DynamicColorNight": "blue",
+            "DynamicColorForeground": "",
+            "DynamicColorBackground": ""
+        }
+    },
+    "tics": false,
+    "stretch": true,
+    "hours12": false,
+    "live": false
+}
