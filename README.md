@@ -48,6 +48,14 @@ Time can be one of the following formats:
 2006-01-02T15:04:05
 ```
 
+Use live mode to continuously update the time, activate once via:
+
+```bash
+gotz --live true
+```
+
+![preview](material/screenshot/preview3.png)
+
 ## Basic configuration
 
 Set the timezones to be used by default:
