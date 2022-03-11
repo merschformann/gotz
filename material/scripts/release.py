@@ -22,7 +22,16 @@ def release(tag: str):
     """
     Release via github cli tool and show output as it occurs.
     """
-    call = f'gh release create "{tag}" --target main --title "Release {tag}"'
+    call = [
+        "gh",
+        "release",
+        "create",
+        tag,
+        "--target",
+        "main",
+        "--title",
+        f"Release {tag}",
+    ]
     with subprocess.Popen(
         call,
         stdout=subprocess.PIPE,
