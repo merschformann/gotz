@@ -3,12 +3,15 @@ package core
 import (
 	"flag"
 	"fmt"
+	"os"
 	"strings"
 	"time"
 )
 
 // parseArgs parses the command line arguments and applies them to the given configuration.
-func ParseFlags(startConfig Config) (Config, time.Time, bool, error) {
+func ParseFlags(startConfig Config, appVersion string) (Config, time.Time, bool, error) {
+	// Define version flag
+	version := flag.Bool("version", false, "print version and exit")
 	// Check for any changes
 	var changed bool
 	// Define configuration flags
@@ -72,6 +75,12 @@ func ParseFlags(startConfig Config) (Config, time.Time, bool, error) {
 
 	// Parse flags
 	flag.Parse()
+
+	// Check for version flag
+	if *version {
+		fmt.Println(appVersion)
+		os.Exit(0)
+	}
 
 	// Handle configuration
 	if timezones != "" {
