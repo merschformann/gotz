@@ -20,3 +20,9 @@ jobs:
 
       - name: go test
         run: go test -v -cover -coverpkg=./... -race ./...
+
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v2
+        with:
+          version: v1.37.1
+          working-directory: ${{ env.working-directory }}
