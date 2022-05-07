@@ -24,7 +24,7 @@ Show current time:
 gotz
 ```
 
-![preview](material/screenshot/preview1.png)
+![preview](material/screenshot/gotz.png)
 
 Show arbitrary time:
 
@@ -32,7 +32,7 @@ Show arbitrary time:
 gotz 15
 ```
 
-![preview](material/screenshot/preview2.png)
+![preview](material/screenshot/gotz-23.png)
 
 Time can be one of the following formats:
 
@@ -54,7 +54,7 @@ Use live mode to continuously update the time (exit via _q_, _esc_ or _ctrl+c_).
 gotz --live true
 ```
 
-![preview](material/screenshot/preview3.png)
+![preview](material/screenshot/gotz-live.png)
 
 ## Basic configuration
 
