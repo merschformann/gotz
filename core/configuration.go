@@ -2,6 +2,7 @@ package core
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -150,20 +151,18 @@ func defaultConfigFile() string {
 func Load() (Config, error) {
 	// If no configuration file exists, create one
 	if _, err := os.Stat(defaultConfigFile()); os.IsNotExist(err) {
-		return saveDefault()
+		return SaveDefault()
 	}
 	// Read configuration file
 	var config Config
 	data, err := ioutil.ReadFile(defaultConfigFile())
 	if err != nil {
-		fmt.Println("Error reading config file (replacing with default config):", err)
-		return saveDefault()
+		return config, errors.New("Error reading config file: " + err.Error())
 	}
 	// Unmarshal
 	err = json.Unmarshal(data, &config)
 	if err != nil {
-		fmt.Println("Error unmarshaling config file (replacing with default config):", err)
-		return saveDefault()
+		return config, errors.New("Error unmarshaling config file: " + err.Error())
 	}
 	// Check version
 	if config.ConfigVersion != ConfigVersion {
@@ -171,16 +170,15 @@ func Load() (Config, error) {
 		if version == "" {
 			version = "unknown"
 		}
-		fmt.Println("Configuration file version mismatch (replacing with default config), version found:", version)
-		return saveDefault()
+		return config, errors.New("Config file version " + version + " is not supported")
 	}
 	// Validate (replace invalid values with defaults)
 	config = config.validate()
 	return config, nil
 }
 
-// saveDefault creates a default config and immediately saves it.
-func saveDefault() (Config, error) {
+// SaveDefault creates a default config and immediately saves it.
+func SaveDefault() (Config, error) {
 	c := DefaultConfig()
 	return c, c.Save()
 }
