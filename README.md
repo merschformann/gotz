@@ -74,7 +74,7 @@ gotz --hours12 true
 
 ## Customization
 
-The configuration is stored in `$HOME/.gotz.config.json`. It can be configured directly or via the arguments of the `gotz` command (see `gotz --help`). The configuration attributes are described in the following example:
+The configuration is stored in `$XDG_CONFIG_HOME/gotz/config.json` (usually `~/.config/gotz/config.json` on most systems). It can be configured directly or via the arguments of the `gotz` command (see `gotz --help`). The configuration attributes are described in the following example:
 
 ```jsonc
 {
