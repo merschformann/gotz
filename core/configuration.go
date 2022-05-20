@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/adrg/xdg"
+	"github.com/tidwall/jsonc"
 )
 
 // ConfigVersion is the current version of the configuration file.
@@ -161,7 +162,7 @@ func Load() (Config, error) {
 		return config, errors.New("Error reading config file: " + err.Error())
 	}
 	// Unmarshal
-	err = json.Unmarshal(data, &config)
+	err = json.Unmarshal(jsonc.ToJSON(data), &config)
 	if err != nil {
 		return config, errors.New("Error unmarshaling config file: " + err.Error())
 	}

@@ -5,6 +5,7 @@ go 1.17
 require (
 	github.com/adrg/xdg v0.4.0
 	github.com/gdamore/tcell/v2 v2.4.0
+	github.com/tidwall/jsonc v0.3.2
 	golang.org/x/term v0.0.0-20201210144234-2321bbc49cbf
 )
 
