@@ -35,7 +35,7 @@ def release(tag: str, notes: str = ""):
         f"Release {tag}",
     ]
     if notes:
-        call.extend(["--notes", f'"{notes}"'])
+        call.extend(["--notes", notes])
     # Get user confirmation
     print(" ".join(call))
     if not input("Continue? [y/N] ").lower().startswith("y"):
@@ -60,7 +60,11 @@ def main():
     """
     parser = argparse.ArgumentParser(description="Release a new version of gotz.")
     parser.add_argument(
-        "--notes", "-n", help="Notes to add to the release.", default=""
+        "--notes",
+        "-n",
+        type=str,
+        help="Notes to add to the release.",
+        default="",
     )
     args = parser.parse_args()
     git_version = get_version_from_git()
