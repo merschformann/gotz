@@ -6,8 +6,9 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"path"
 	"time"
+
+	"github.com/adrg/xdg"
 )
 
 // ConfigVersion is the current version of the configuration file.
@@ -140,11 +141,11 @@ func DefaultConfig() Config {
 
 // defaultConfigFile is the path of the default configuration file.
 func defaultConfigFile() string {
-	home, err := os.UserHomeDir()
+	configFilePath, err := xdg.ConfigFile("gotz/config.json")
 	if err != nil {
 		panic(fmt.Sprintf("Could not get user home directory: %s", err))
 	}
-	return path.Join(home, ".gotz.config.json")
+	return configFilePath
 }
 
 // Load configuration from file.
