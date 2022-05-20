@@ -143,7 +143,7 @@ func DefaultConfig() Config {
 func defaultConfigFile() string {
 	configFilePath, err := xdg.ConfigFile("gotz/config.json")
 	if err != nil {
-		panic(fmt.Sprintf("Could not get user home directory: %s", err))
+		panic(fmt.Sprintf("Could not get user config directory: %s", err))
 	}
 	return configFilePath
 }
