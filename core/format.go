@@ -174,7 +174,12 @@ func GetHourSymbol(sty Style, hour int) string {
 	// Get symbol depending on symbol mode
 	switch sty.Symbols {
 	case SymbolModeRectangles:
-		return RectangleSymbols[getDaySegment(sty.DaySegmentation, hour)]
+		// Return solid block if color mode is enabled
+		if (sty.Colorize && (RectangleSymbols[getDaySegment(sty.DaySegmentation, hour)] == " ")){
+			return "█"
+		} else {
+			return RectangleSymbols[getDaySegment(sty.DaySegmentation, hour)]
+		}
 	case SymbolModeSunMoon:
 		return SunMoonSymbols[getDaySegment(sty.DaySegmentation, hour)]
 	case SymbolModeMono:
