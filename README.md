@@ -88,8 +88,17 @@ The configuration is stored in `$XDG_CONFIG_HOME/gotz/config.json` (usually `~/.
     ],
     // Configures the style of the plot
     "style": {
-        // Select symbols to use for the time blocks (one of 'mono', 'rectangles' or 'sun-moon')
+        // Select symbols to use for the time blocks
+        // (one of 'mono', 'rectangles', 'blocks', 'sun-moon' or 'custom')
         "symbols": "mono",
+        // Define custom symbols (used if 'symbols' is 'custom')
+        // Each symbol is used from its start time (hour in day as int) until the next symbol
+        "custom_symbols": [
+            { "Start": 6, "Symbol": "▓" },
+            { "Start": 8, "Symbol": "█" },
+            { "Start": 18, "Symbol": "▓" },
+            { "Start": 22, "Symbol": "░" }
+        ],
         // Indicates whether to use coloring at all
         "colorize": true,
         // Configures how the day is segmented

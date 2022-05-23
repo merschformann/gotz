@@ -94,8 +94,9 @@ func ParseFlags(startConfig Config, appVersion string) (Config, time.Time, bool,
 	if symbols != "" {
 		changed = true
 		startConfig.Style.Symbols = symbols
-		if !checkSymbolMode(startConfig.Style.Symbols) {
-			return startConfig, time.Time{}, false, fmt.Errorf("invalid symbol mode: %s", symbols)
+		symbolError := checkSymbolMode(startConfig.Style.Symbols)
+		if symbolError != nil {
+			return startConfig, time.Time{}, changed, symbolError
 		}
 	}
 	if tics != "" {

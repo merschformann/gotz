@@ -49,6 +49,8 @@ type Location struct {
 type Style struct {
 	// Defines the symbols to be used.
 	Symbols string `json:"symbols"`
+	// Defines the symbols to be used in custom mode.
+	CustomSymbols []TimeSymbol `json:"custom_symbols,omitempty"`
 	// Indicates whether to use colors.
 	Colorize bool `json:"colorize"`
 	// Defines how the day is split up into different ranges.
@@ -67,6 +69,15 @@ type DaySegmentation struct {
 	EveningHour int `json:"evening"`
 	// NightHour is the hour at which the night starts.
 	NightHour int `json:"night"`
+}
+
+// TimeSymbol defines a symbol to be used from a start time until another symbol
+// is reached.
+type TimeSymbol struct {
+	// Start of the time range.
+	Start int
+	// Symbol to be used for the time.
+	Symbol string
 }
 
 // PlotColors defines the colors to be used in the plot.
@@ -113,7 +124,13 @@ func DefaultConfig() Config {
 		ConfigVersion: ConfigVersion,
 		Timezones:     tzs,
 		Style: Style{
-			Symbols:  SymbolModeDefault,
+			Symbols: SymbolModeDefault,
+			CustomSymbols: []TimeSymbol{
+				{6, "▓"},
+				{8, "█"},
+				{18, "▓"},
+				{22, "░"},
+			},
 			Colorize: false,
 			DaySegmentation: DaySegmentation{
 				MorningHour: 6,
@@ -174,8 +191,11 @@ func Load() (Config, error) {
 		}
 		return config, errors.New("Config file version " + version + " is not supported")
 	}
-	// Validate (replace invalid values with defaults)
-	config = config.validate()
+	// Validate
+	err = config.validate()
+	if err != nil {
+		return config, errors.New("Error validating config file: " + err.Error())
+	}
 	return config, nil
 }
 
@@ -201,11 +221,7 @@ func (c *Config) Save() error {
 }
 
 // validate validates the configuration.
-func (c Config) validate() Config {
-	// Check whether symbol mode is known
-	if !checkSymbolMode(c.Style.Symbols) {
-		fmt.Printf("Warning - invalid symbols (using default): %s\n", c.Style.Symbols)
-		c.Style.Symbols = SymbolModeDefault
-	}
-	return c
+func (c Config) validate() error {
+	// Check whether symbol configuration is valid
+	return checkSymbolConfig(c.Style)
 }

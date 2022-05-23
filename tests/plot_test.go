@@ -41,26 +41,9 @@ func TestTableStatic(t *testing.T) {
 	loc, _ := time.LoadLocation("Europe/Berlin")
 	testTime := time.Date(1985, 8, 24, 16, 0, 0, 0, loc)
 
-	// Setup plotter (collect output in stringbuilder for comparison)
-	sb := strings.Builder{}
-	plotter := core.Plotter{
-		Now:           true,
-		TerminalWidth: 72,
-		PlotLine: func(t core.ContextType, line ...interface{}) {
-			_ = t
-			sb.WriteString(fmt.Sprint(line...) + "\n")
-		},
-		PlotString: func(t core.ContextType, msg string) {
-			_ = t
-			sb.WriteString(msg)
-		},
-	}
-
 	// Run all tests
 	for _, configFile := range testConfigurations {
 		t.Run(strings.Replace(configFile, ".json", "", -1), func(t *testing.T) {
-			// Reset stringbuilder
-			sb.Reset()
 			// Read configuration file
 			var config core.Config
 			data, err := ioutil.ReadFile(configFile)
@@ -77,6 +60,21 @@ func TestTableStatic(t *testing.T) {
 			expected, err := readExpectation(goldenFile)
 			if err != nil && !*update {
 				t.Fatal(err)
+			}
+			// Setup plotter (collect output in stringbuilder for comparison)
+			sb := strings.Builder{}
+			plotter := core.Plotter{
+				Now:           true,
+				TerminalWidth: 72,
+				PlotLine: func(t core.ContextType, line ...interface{}) {
+					_ = t
+					sb.WriteString(fmt.Sprint(line...) + "\n")
+				},
+				PlotString: func(t core.ContextType, msg string) {
+					_ = t
+					sb.WriteString(msg)
+				},
+				Symbols: core.GetSymbols(config.Style),
 			}
 			// Create plot
 			err = core.PlotTime(plotter, config, testTime)

@@ -19,6 +19,8 @@ type Plotter struct {
 	PlotLine func(t ContextType, msgs ...interface{})
 	// func for plotting simple strings
 	PlotString func(t ContextType, msg string)
+	// All symbols to represent the hours
+	Symbols []string
 	// Terminal width
 	TerminalWidth int
 	// Whether to plot the current time
@@ -49,6 +51,16 @@ func updateTimeNeeded(shown, now time.Time) bool {
 // formatDay formats the day in the default way.
 func formatDay(twelve bool, t time.Time) string {
 	return t.Format("Mon 02 Jan 2006")
+}
+
+// getHourSymbol returns a symbol representing the hour in a day.
+func getHourSymbol(plotter Plotter, hour int) string {
+	// Small sanity check
+	if hour < 0 || hour > 23 {
+		panic(fmt.Sprintf("invalid hour: %d", hour))
+	}
+	// Returns symbol representing the hour
+	return plotter.Symbols[hour]
 }
 
 // Plot is the main plotting function. It either plots to the terminal in a
@@ -116,7 +128,12 @@ func Plot(c Config, t time.Time) error {
 		}
 
 		// Prepare plotter
-		plt := Plotter{PlotLine: plotLine, PlotString: plotString, Now: true}
+		plt := Plotter{
+			PlotLine:   plotLine,
+			PlotString: plotString,
+			Symbols:    GetSymbols(c.Style),
+			Now:        true,
+		}
 
 		// Refresh time periodically
 		updateTimeout := time.Duration(40) * time.Millisecond
@@ -187,6 +204,7 @@ func Plot(c Config, t time.Time) error {
 					fmt.Print(msg)
 				}
 			},
+			Symbols: GetSymbols(c.Style),
 		}
 		// Get current time, if no specific time was requested
 		if plt.Now {
@@ -273,11 +291,12 @@ func PlotTime(plt Plotter, cfg Config, t time.Time) error {
 			// Convert to tz time
 			tzTime := timeSlots[j].Time.In(timezones[i])
 			// Get symbol of slot
-			s := GetHourSymbol(cfg.Style, tzTime.Hour())
+			s := getHourSymbol(plt, tzTime.Hour())
 			// Get segment type of slot
 			seg := getDaySegment(cfg.Style.DaySegmentation, tzTime.Hour())
 			if j == nowSlot {
 				s = "|"
+				seg = ContextNormal
 			}
 			plt.PlotString(seg, s)
 		}
