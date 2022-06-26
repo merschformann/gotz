@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -65,7 +66,7 @@ func ParseFlags(startConfig Config, appVersion string) (Config, time.Time, bool,
 
 	// Define direct flags
 	var requestTime string
-	var t time.Time = time.Time{}
+	var rt time.Time = time.Time{}
 	flag.StringVar(
 		&requestTime,
 		"time",
@@ -87,7 +88,7 @@ func ParseFlags(startConfig Config, appVersion string) (Config, time.Time, bool,
 		changed = true
 		tzs, err := parseTimezones(timezones)
 		if err != nil {
-			return startConfig, time.Time{}, changed, err
+			return startConfig, rt, changed, err
 		}
 		startConfig.Timezones = tzs
 	}
@@ -96,7 +97,7 @@ func ParseFlags(startConfig Config, appVersion string) (Config, time.Time, bool,
 		startConfig.Style.Symbols = symbols
 		symbolError := checkSymbolMode(startConfig.Style.Symbols)
 		if symbolError != nil {
-			return startConfig, time.Time{}, changed, symbolError
+			return startConfig, rt, changed, symbolError
 		}
 	}
 	if tics != "" {
@@ -106,7 +107,7 @@ func ParseFlags(startConfig Config, appVersion string) (Config, time.Time, bool,
 		} else if strings.ToLower(tics) == "false" {
 			startConfig.Tics = false
 		} else {
-			return startConfig, time.Time{}, changed, fmt.Errorf("invalid value for tics: %s", tics)
+			return startConfig, rt, changed, fmt.Errorf("invalid value for tics: %s", tics)
 		}
 	}
 	if stretch != "" {
@@ -116,7 +117,7 @@ func ParseFlags(startConfig Config, appVersion string) (Config, time.Time, bool,
 		} else if strings.ToLower(stretch) == "false" {
 			startConfig.Stretch = false
 		} else {
-			return startConfig, time.Time{}, changed, fmt.Errorf("invalid value for stretch: %s", stretch)
+			return startConfig, rt, changed, fmt.Errorf("invalid value for stretch: %s", stretch)
 		}
 	}
 	if colorize != "" {
@@ -126,7 +127,7 @@ func ParseFlags(startConfig Config, appVersion string) (Config, time.Time, bool,
 		} else if strings.ToLower(colorize) == "false" {
 			startConfig.Style.Colorize = false
 		} else {
-			return startConfig, time.Time{}, changed, fmt.Errorf("invalid value for colorize: %s", colorize)
+			return startConfig, rt, changed, fmt.Errorf("invalid value for colorize: %s", colorize)
 		}
 	}
 	if hours12 != "" {
@@ -136,7 +137,7 @@ func ParseFlags(startConfig Config, appVersion string) (Config, time.Time, bool,
 		} else if strings.ToLower(hours12) == "false" {
 			startConfig.Hours12 = false
 		} else {
-			return startConfig, time.Time{}, changed, fmt.Errorf("invalid value for hours12: %s", hours12)
+			return startConfig, rt, changed, fmt.Errorf("invalid value for hours12: %s", hours12)
 		}
 	}
 	if live != "" {
@@ -146,18 +147,18 @@ func ParseFlags(startConfig Config, appVersion string) (Config, time.Time, bool,
 		} else if strings.ToLower(live) == "false" {
 			startConfig.Live = false
 		} else {
-			return startConfig, time.Time{}, changed, fmt.Errorf("invalid value for live: %s", live)
+			return startConfig, rt, changed, fmt.Errorf("invalid value for live: %s", live)
 		}
 	}
 
 	// Handle direct flags
 	if requestTime != "" {
 		// Parse time
-		rTime, err := parseTime(requestTime)
+		rTime, err := parseRequestTime(startConfig, requestTime)
 		if err != nil {
-			return startConfig, time.Time{}, changed, err
+			return startConfig, rt, changed, err
 		}
-		t = rTime
+		rt = rTime
 	}
 
 	// Handle last argument as time, if it starts with a digit
@@ -167,15 +168,15 @@ func ParseFlags(startConfig Config, appVersion string) (Config, time.Time, bool,
 		// If last argument is a time, parse it
 		if len(lastArg) > 0 && lastArg[0] >= '0' && lastArg[0] <= '9' {
 			// Parse time
-			rTime, err := parseTime(lastArg)
+			rTime, err := parseRequestTime(startConfig, lastArg)
 			if err != nil {
-				return startConfig, time.Time{}, changed, err
+				return startConfig, rt, changed, err
 			}
-			t = rTime
+			rt = rTime
 		}
 	}
 
-	return startConfig, t, changed, nil
+	return startConfig, rt, changed, nil
 }
 
 // parseTimezones parses a comma-separated list of timezones.
@@ -230,8 +231,47 @@ type inputTimeFormat struct {
 	TZInfo bool
 }
 
-// parseTime parses a time string.
-func parseTime(t string) (time.Time, error) {
+// parseRequestTime parses a requested time in various formats. Furthermore, it
+// reads an optional timezone index and uses its timezone instead of local.
+func parseRequestTime(config Config, t string) (time.Time, error) {
+	tzSeparator := "@"
+	tz := time.Local
+	// Check whether a different time zone than the local one was specified.
+	if strings.Contains(t, tzSeparator) {
+		// Split time and timezone
+		parts := strings.Split(t, tzSeparator)
+		if len(parts) != 2 {
+			return time.Time{}, fmt.Errorf("invalid time format: %s (should be <timezone-index>/<time>)", t)
+		}
+		// Parse timezone index
+		tzIndex, err := strconv.Atoi(parts[1])
+		if err != nil {
+			return time.Time{}, fmt.Errorf("invalid time format: %s (should be <timezone-index>/<time>)", t)
+		}
+		if tzIndex < 0 || tzIndex > len(config.Timezones) {
+			return time.Time{}, fmt.Errorf("invalid time format: %s (timezone-index out of range)", t)
+		}
+		t = parts[0]
+		// Get timezone at index (offset by one to account for 0 as local timezone)
+		if tzIndex > 0 {
+			tz, err = time.LoadLocation(config.Timezones[tzIndex-1].TZ)
+			if err != nil {
+				return time.Time{}, fmt.Errorf("invalid timezone: %s (given index %d)",
+					config.Timezones[tzIndex-1].TZ,
+					tzIndex)
+			}
+		}
+	}
+	// Parse time
+	rt, err := parseTime(t, tz)
+	if err != nil {
+		return time.Time{}, err
+	}
+	return rt, nil
+}
+
+// parseTime parses a time string in various formats.
+func parseTime(t string, tz *time.Location) (time.Time, error) {
 	// Try all supported formats
 	for _, format := range []inputTimeFormat{
 		{"15", false, false},
@@ -249,9 +289,9 @@ func parseTime(t string) (time.Time, error) {
 			n := time.Now()
 			if !format.TZInfo {
 				if format.Date {
-					t = time.Date(t.Year(), t.Month(), t.Day(), t.Hour(), t.Minute(), t.Second(), 0, time.Local)
+					t = time.Date(t.Year(), t.Month(), t.Day(), t.Hour(), t.Minute(), t.Second(), 0, tz)
 				} else {
-					t = time.Date(n.Year(), n.Month(), n.Day(), t.Hour(), t.Minute(), t.Second(), 0, time.Local)
+					t = time.Date(n.Year(), n.Month(), n.Day(), t.Hour(), t.Minute(), t.Second(), 0, tz)
 				}
 			}
 			return t, nil

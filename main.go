@@ -31,7 +31,7 @@ func main() {
 		}
 	}
 	// Parse flags
-	config, t, changed, err := core.ParseFlags(config, Version)
+	config, rt, changed, err := core.ParseFlags(config, Version)
 	if err != nil {
 		fmt.Println("error parsing flags:", err)
 		os.Exit(1)
@@ -45,7 +45,7 @@ func main() {
 		}
 	}
 	// Plot time
-	err = core.Plot(config, t)
+	err = core.Plot(config, rt)
 	if err != nil {
 		fmt.Println("error plotting time:", err)
 		os.Exit(1)
