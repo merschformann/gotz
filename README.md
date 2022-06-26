@@ -29,18 +29,18 @@ gotz
 Show arbitrary time:
 
 ```bash
-gotz 23
+gotz 15
 ```
 
-![preview](material/screenshot/gotz-23.png)
+![preview](material/screenshot/gotz-15.png)
 
 Show arbitrary time using different timezone (index based):
 
 ```bash
-gotz 23@1
+gotz 15@1
 ```
 
-![preview](material/screenshot/gotz-23-1.png)
+![preview](material/screenshot/gotz-15-1.png)
 
 Time can be one of the following formats:
 
