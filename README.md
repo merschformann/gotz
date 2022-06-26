@@ -34,6 +34,14 @@ gotz 23
 
 ![preview](material/screenshot/gotz-23.png)
 
+Show arbitrary time using different timezone (index based):
+
+```bash
+gotz 23@1
+```
+
+![preview](material/screenshot/gotz-23-1.png)
+
 Time can be one of the following formats:
 
 ```txt
