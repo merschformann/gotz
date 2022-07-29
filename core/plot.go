@@ -224,8 +224,6 @@ func Plot(c Config, t time.Time) error {
 
 // PlotTime plots the time on the terminal.
 func PlotTime(plt Plotter, cfg Config, t time.Time) error {
-	inline := true
-
 	// Get infos and time zones for all locations
 	timeInfos, timeZones, err := createTimeInfos(cfg, t)
 	if err != nil {
@@ -234,7 +232,7 @@ func PlotTime(plt Plotter, cfg Config, t time.Time) error {
 
 	// Determine time info width
 	timeInfoWidth := 0
-	if inline {
+	if cfg.Inline {
 		for _, ti := range timeInfos {
 			if len(ti) > timeInfoWidth {
 				timeInfoWidth = len(ti)
@@ -281,7 +279,7 @@ func PlotTime(plt Plotter, cfg Config, t time.Time) error {
 	for i := range timeInfos {
 		// Start with location info
 		timeInfo := timeInfos[i]
-		if inline {
+		if cfg.Inline {
 			// Plot time info and continue in same line
 			timeInfo += " "
 			plt.PlotString(ContextNormal, timeInfo)
