@@ -64,7 +64,7 @@ gotz --live true
 
 ![preview](material/screenshot/gotz-live.png)
 
-(above also uses option `--inline false`)
+(above also uses option `--inline false`; for styling see customization below)
 
 ## Basic configuration
 
