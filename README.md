@@ -29,7 +29,7 @@ gotz
 Show arbitrary time:
 
 ```bash
-gotz 15
+gotz 21
 ```
 
 ![preview](material/screenshot/gotz-15.png)
@@ -40,7 +40,7 @@ Show arbitrary time using different timezone (index based):
 gotz 15@1
 ```
 
-![preview](material/screenshot/gotz-15-1.png)
+![preview](material/screenshot/gotz-15-2.png)
 
 Time can be one of the following formats:
 
@@ -63,6 +63,8 @@ gotz --live true
 ```
 
 ![preview](material/screenshot/gotz-live.png)
+
+(above also uses option `--inline false`; for styling see customization below)
 
 ## Basic configuration
 
@@ -157,6 +159,8 @@ The configuration is stored in `$XDG_CONFIG_HOME/gotz/config.json` (usually `~/.
     "tics": false,
     // Indicates whether to stretch across the full terminal width (causes inhomogeneous segment lengths)
     "stretch": true,
+    // Inline indicates whether location and time info will be plotted on one line with the bars.
+    "inline": true,
     // Indicates whether to colorize the blocks
     "hours12": false,
     // Indicates whether to use 12-hour format

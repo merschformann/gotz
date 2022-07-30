@@ -16,7 +16,7 @@ func ParseFlags(startConfig Config, appVersion string) (Config, time.Time, bool,
 	// Check for any changes
 	var changed bool
 	// Define configuration flags
-	var timezones, symbols, tics, stretch, colorize, hours12, live string
+	var timezones, symbols, tics, stretch, inline, colorize, hours12, live string
 	flag.StringVar(
 		&timezones,
 		"timezones",
@@ -44,6 +44,12 @@ func ParseFlags(startConfig Config, appVersion string) (Config, time.Time, bool,
 		"stretch",
 		"",
 		"indicates whether to stretch across the terminal width at cost of accuracy (one of: true, false)",
+	)
+	flag.StringVar(
+		&inline,
+		"inline",
+		"",
+		"indicates whether to display time info and bars in one line (one of: true, false)",
 	)
 	flag.StringVar(
 		&colorize,
@@ -118,6 +124,16 @@ func ParseFlags(startConfig Config, appVersion string) (Config, time.Time, bool,
 			startConfig.Stretch = false
 		} else {
 			return startConfig, rt, changed, fmt.Errorf("invalid value for stretch: %s", stretch)
+		}
+	}
+	if inline != "" {
+		changed = true
+		if strings.ToLower(inline) == "true" {
+			startConfig.Inline = true
+		} else if strings.ToLower(inline) == "false" {
+			startConfig.Inline = false
+		} else {
+			return startConfig, rt, changed, fmt.Errorf("invalid value for inline: %s", inline)
 		}
 	}
 	if colorize != "" {

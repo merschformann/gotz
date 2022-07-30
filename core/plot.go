@@ -121,8 +121,8 @@ func Plot(c Config, t time.Time) error {
 				style = styles[t]
 			}
 			// Print message
-			for i, r := range fmt.Sprint(msg) {
-				s.SetContent(x+i, y, r, nil, style)
+			for _, r := range fmt.Sprint(msg) {
+				s.SetContent(x, y, r, nil, style)
 				x++
 			}
 		}
@@ -222,11 +222,28 @@ func Plot(c Config, t time.Time) error {
 
 // PlotTime plots the time on the terminal.
 func PlotTime(plt Plotter, cfg Config, t time.Time) error {
+	// Get infos and time zones for all locations
+	timeInfos, timeZones, err := createTimeInfos(cfg, t)
+	if err != nil {
+		return err
+	}
+
+	// Determine time info width
+	timeInfoWidth := 0
+	if cfg.Inline {
+		for _, ti := range timeInfos {
+			if len(ti) > timeInfoWidth {
+				timeInfoWidth = len(ti)
+			}
+		}
+		timeInfoWidth++ // Leave a space between time info and bars
+	}
+
 	// Get terminal width
-	width := plt.TerminalWidth
+	width := plt.TerminalWidth - timeInfoWidth
 	// Set hours to plot
 	hours := 24
-	// Get terminal width
+	// Use integral time slots with no rounding issues, if desired
 	if !cfg.Stretch {
 		width = width / 24 * 24
 	}
@@ -236,15 +253,15 @@ func PlotTime(plt Plotter, cfg Config, t time.Time) error {
 	slotMinutes := hours * 60 / width
 	offsetMinutes := slotMinutes * width / 2
 	// Plot header
-	nowDescription := "now"
+	nowTag := "now"
 	if !plt.Now {
-		nowDescription = "time"
+		nowTag = "time"
 	}
 	plt.PlotLine(
 		ContextNormal,
 		strings.Repeat(" ",
-			nowSlot-(len(nowDescription)+1))+
-			nowDescription+" v "+
+			timeInfoWidth+nowSlot-(len(nowTag)+1))+
+			nowTag+" v "+
 			formatTime(cfg.Hours12, t))
 	// Prepare slots
 	for i := 0; i < width; i++ {
@@ -256,40 +273,25 @@ func PlotTime(plt Plotter, cfg Config, t time.Time) error {
 		}
 	}
 
-	// Prepare timezones to plot
-	timezones := make([]*time.Location, len(cfg.Timezones)+1)
-	descriptions := make([]string, len(cfg.Timezones)+1)
-	timezones[0] = time.Local
-	descriptions[0] = "Local"
-	for i, tz := range cfg.Timezones {
-		// Get timezone
-		loc, err := time.LoadLocation(tz.TZ)
-		if err != nil {
-			return fmt.Errorf("error loading timezone %s: %s", tz.TZ, err)
+	// Plot all locations
+	for i := range timeInfos {
+		// Start with location info
+		timeInfo := timeInfos[i]
+		if cfg.Inline {
+			// Plot time info and continue in same line
+			timeInfo += " "
+			plt.PlotString(ContextNormal, timeInfo)
+		} else {
+			// Plot time info (also add the vertical marker) and start new line
+			if len(timeInfo)-1 < nowSlot {
+				timeInfo = timeInfo + strings.Repeat(" ", nowSlot-len(timeInfo)) + "|"
+			}
+			plt.PlotLine(ContextNormal, timeInfo)
 		}
-		// Store timezone
-		timezones[i+1] = loc
-		descriptions[i+1] = tz.Name
-	}
-	descriptionLength := maxStringLength(descriptions)
-
-	// Plot all timezones
-	for i := range timezones {
-		// --> Plot header
-		desc := fmt.Sprintf("%-*s", descriptionLength, descriptions[i])
-		desc = fmt.Sprintf(
-			"%s: %s %s",
-			desc,
-			formatDay(cfg.Hours12, t.In(timezones[i])),
-			formatTime(cfg.Hours12, t.In(timezones[i])))
-		if len(desc)-1 < nowSlot {
-			desc = desc + strings.Repeat(" ", nowSlot-len(desc)) + "|"
-		}
-		plt.PlotLine(ContextNormal, desc)
 		// --> Plot timeslots
 		for j := 0; j < width; j++ {
 			// Convert to tz time
-			tzTime := timeSlots[j].Time.In(timezones[i])
+			tzTime := timeSlots[j].Time.In(timeZones[i])
 			// Get symbol of slot
 			s := getHourSymbol(plt, tzTime.Hour())
 			// Get segment type of slot
@@ -309,6 +311,42 @@ func PlotTime(plt Plotter, cfg Config, t time.Time) error {
 	}
 
 	return nil
+}
+
+// createTimeInfos creates the time info strings for all locations.
+func createTimeInfos(cfg Config, t time.Time) (timeInfos []string, times []*time.Location, err error) {
+	// Init
+	timeInfos = make([]string, len(cfg.Timezones)+1)
+
+	// Prepare timeZones to plot
+	timeZones := make([]*time.Location, len(cfg.Timezones)+1)
+	descriptions := make([]string, len(cfg.Timezones)+1)
+	timeZones[0] = time.Local
+	descriptions[0] = "Local"
+	for i, tz := range cfg.Timezones {
+		// Get timezone
+		loc, err := time.LoadLocation(tz.TZ)
+		if err != nil {
+			return nil, nil, fmt.Errorf("error loading timezone %s: %s", tz.TZ, err)
+		}
+		// Store timezone
+		timeZones[i+1] = loc
+		descriptions[i+1] = tz.Name
+	}
+	descriptionLength := maxStringLength(descriptions)
+
+	for i := range timeZones {
+		// Prepare location and time infos
+		timeInfo := fmt.Sprintf("%-*s", descriptionLength, descriptions[i])
+		timeInfo = fmt.Sprintf(
+			"%s: %s %s",
+			timeInfo,
+			formatDay(cfg.Hours12, t.In(timeZones[i])),
+			formatTime(cfg.Hours12, t.In(timeZones[i])))
+		timeInfos[i] = timeInfo
+	}
+
+	return timeInfos, timeZones, nil
 }
 
 // plotTics adds tics to the plot.

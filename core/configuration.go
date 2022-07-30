@@ -31,6 +31,9 @@ type Config struct {
 	// Indicates whether to stretch across the terminal width at cost of
 	// accuracy.
 	Stretch bool `json:"stretch"`
+	// Inline indicates whether location and time info will be plotted on one
+	// line with the bars.
+	Inline bool `json:"inline"`
 	// Indicates whether to use the 24-hour clock.
 	Hours12 bool `json:"hours12"`
 
@@ -154,6 +157,7 @@ func DefaultConfig() Config {
 		},
 		Tics:    false,
 		Stretch: true,
+		Inline:  true,
 	}
 }
 
