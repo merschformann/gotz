@@ -121,11 +121,9 @@ func Plot(c Config, t time.Time) error {
 				style = styles[t]
 			}
 			// Print message
-			for i, r := range fmt.Sprint(msg) {
-				s.SetContent(x+i, y, r, nil, style)
-				if i == len(msg)-1 {
-					x += i + 1
-				}
+			for _, r := range fmt.Sprint(msg) {
+				s.SetContent(x, y, r, nil, style)
+				x++
 			}
 		}
 
