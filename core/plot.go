@@ -241,6 +241,9 @@ func PlotTime(plt Plotter, cfg Config, t time.Time) error {
 
 	// Get terminal width
 	width := plt.TerminalWidth - timeInfoWidth
+	if width < 0 {
+		width = 0
+	}
 	// Set hours to plot
 	hours := 24
 	// Use integral time slots with no rounding issues, if desired
@@ -250,19 +253,25 @@ func PlotTime(plt Plotter, cfg Config, t time.Time) error {
 	// Determine time slot basics
 	timeSlots := make([]timeslot, width)
 	nowSlot := width / 2
-	slotMinutes := hours * 60 / width
+	slotMinutes := 0
+	if width > 0 {
+		slotMinutes = hours * 60 / width
+	}
 	offsetMinutes := slotMinutes * width / 2
 	// Plot header
 	nowTag := "now"
 	if !plt.Now {
 		nowTag = "time"
 	}
-	plt.PlotLine(
-		ContextNormal,
-		strings.Repeat(" ",
-			timeInfoWidth+nowSlot-(len(nowTag)+1))+
-			nowTag+" v "+
-			formatTime(cfg.Hours12, t))
+	headLine := strings.Repeat(" ",
+		timeInfoWidth+nowSlot-(len(nowTag)+1)) +
+		nowTag + " v " +
+		formatTime(cfg.Hours12, t)
+	if len(headLine) > plt.TerminalWidth {
+		// Truncate head line if it is too long
+		headLine = headLine[:plt.TerminalWidth]
+	}
+	plt.PlotLine(ContextNormal, headLine)
 	// Prepare slots
 	for i := 0; i < width; i++ {
 		// Get time of slot
