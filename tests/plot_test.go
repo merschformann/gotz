@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -20,7 +20,7 @@ var update = flag.Bool("update", false, "Update golden files")
 // readExpectation reads the golden file and returns its content.
 func readExpectation(goldenFile string) (string, error) {
 	// Read expected output string from file
-	expected, err := ioutil.ReadFile(goldenFile)
+	expected, err := os.ReadFile(goldenFile)
 	if err != nil {
 		return "", err
 	}
@@ -46,7 +46,7 @@ func TestTableStatic(t *testing.T) {
 		t.Run(strings.Replace(configFile, ".json", "", -1), func(t *testing.T) {
 			// Read configuration file
 			var config core.Config
-			data, err := ioutil.ReadFile(configFile)
+			data, err := os.ReadFile(configFile)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -85,7 +85,7 @@ func TestTableStatic(t *testing.T) {
 			actual := sb.String()
 			// Update golden file
 			if *update {
-				if err := ioutil.WriteFile(goldenFile, []byte(actual), 0644); err != nil {
+				if err := os.WriteFile(goldenFile, []byte(actual), 0644); err != nil {
 					t.Fatal(err)
 				}
 			} else {

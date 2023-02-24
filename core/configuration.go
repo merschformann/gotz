@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"time"
 
@@ -178,7 +177,7 @@ func Load() (Config, error) {
 	}
 	// Read configuration file
 	var config Config
-	data, err := ioutil.ReadFile(defaultConfigFile())
+	data, err := os.ReadFile(defaultConfigFile())
 	if err != nil {
 		return config, errors.New("Error reading config file: " + err.Error())
 	}
@@ -217,7 +216,7 @@ func (c *Config) Save() error {
 		return err
 	}
 	// Write file
-	err = ioutil.WriteFile(defaultConfigFile(), data, 0644)
+	err = os.WriteFile(defaultConfigFile(), data, 0644)
 	if err != nil {
 		return err
 	}
