@@ -74,7 +74,7 @@ Set the timezones to be used by default:
 gotz --timezones "Office:America/New_York,Home:Europe/Berlin"
 ```
 
-(lookup timezones in the [timezones](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones) wiki page - _TZ database name_ column)
+(lookup timezones in the [timezones](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones) wiki page - _TZ identifier_ column)
 
 Set 12-hour format:
 
