@@ -37,7 +37,7 @@ gotz 21
 Show arbitrary time using different timezone (index based):
 
 ```bash
-gotz 15@1
+gotz 15@2
 ```
 
 ![preview](material/screenshot/gotz-15-2.png)
