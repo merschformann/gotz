@@ -1,6 +1,4 @@
-<img src="material/icon/world.svg" align="right" height="110"/>
-
-# gotz
+# gotz <img src='material/icon/world.svg' align="right" height="110" />
 
 go**tz** - a simple CLI timezone info tool.
 
