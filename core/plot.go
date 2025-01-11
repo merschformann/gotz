@@ -31,7 +31,7 @@ type Plotter struct {
 // though).
 func formatTime(twelve bool, t time.Time) string {
 	if twelve {
-		return t.Format("3:04PM")
+		return t.Format("03:04PM")
 	} else {
 		return t.Format("15:04")
 	}
