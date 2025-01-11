@@ -36,6 +36,8 @@ def release(tag: str, notes: str = ""):
     ]
     if notes:
         call.extend(["--notes", notes])
+    else:
+        call.extend(["--generate-notes"])
     # Get user confirmation
     print(" ".join(call))
     if not input("Continue? [y/N] ").lower().startswith("y"):
