@@ -29,10 +29,16 @@ type Plotter struct {
 
 // formatTime formats the time in the default way (distinguishing 12/24 hours
 // though).
-func formatTime(twelve bool, t time.Time) string {
+func formatTime(twelve, flush bool, t time.Time) string {
 	if twelve {
-		return t.Format("3:04PM")
+		// 12-hour format
+		s := t.Format("3:04PM")
+		if flush {
+			return fmt.Sprintf("%7s", s)
+		}
+		return s
 	} else {
+		// 24-hour format
 		return t.Format("15:04")
 	}
 }
@@ -266,7 +272,7 @@ func PlotTime(plt Plotter, cfg Config, t time.Time) error {
 	headLine := strings.Repeat(" ",
 		timeInfoWidth+nowSlot-(len(nowTag)+1)) +
 		nowTag + " v " +
-		formatTime(cfg.Hours12, t)
+		formatTime(cfg.Hours12, false, t)
 	if len(headLine) > plt.TerminalWidth {
 		// Truncate head line if it is too long
 		headLine = headLine[:plt.TerminalWidth]
@@ -351,7 +357,7 @@ func createTimeInfos(cfg Config, t time.Time) (timeInfos []string, times []*time
 			"%s: %s %s",
 			timeInfo,
 			formatDay(cfg.Hours12, t.In(timeZones[i])),
-			formatTime(cfg.Hours12, t.In(timeZones[i])))
+			formatTime(cfg.Hours12, true, t.In(timeZones[i])))
 		timeInfos[i] = timeInfo
 	}
 

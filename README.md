@@ -128,6 +128,8 @@ The configuration is stored in `$XDG_CONFIG_HOME/gotz/config.json` (usually `~/.
         // Dynamic mode colors 
         //  - tcell color names like crimson, green, etc.
         //  - hex codes like #DC143C, #00ff00, etc.
+        // Note that some symbols are not fully opaque and will show the background color, thus,
+        //   making the color appear darker (or lighter for white/light terminal backgrounds)
         "coloring": {
             // Color of the morning segment for static mode
             "StaticColorMorning": "#EC3620",
