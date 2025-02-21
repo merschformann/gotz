@@ -25,6 +25,7 @@ brews:
     repository:
       owner: merschformann
       name: gotz-brew
+      token: "{{ .Env.BREW_TOKEN }}"
     commit_author:
       name: merschbotmann
       email: bot.merschformann@gmail.com

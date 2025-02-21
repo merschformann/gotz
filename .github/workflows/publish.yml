@@ -29,7 +29,8 @@ jobs:
           distribution: goreleaser
           args: release --clean
         env:
-          GITHUB_TOKEN: ${{ secrets.BREW_BUMP_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BREW_TOKEN: ${{ secrets.BREW_BUMP_TOKEN }}
 
   # homebrew:
   #   runs-on: ubuntu-latest
