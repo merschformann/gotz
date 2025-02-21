@@ -31,7 +31,7 @@ func main() {
 		}
 	}
 	// Parse flags
-	config, rt, changed, err := core.ParseFlags(config, Version)
+	config, rt, changed, err := core.ParseFlags(config, GetReleaseInfo().Version)
 	if err != nil {
 		fmt.Println("error parsing flags:", err)
 		os.Exit(1)
