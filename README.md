@@ -12,7 +12,7 @@ go install github.com/merschformann/gotz@latest
 
 ### Binary
 
-Simply download the binary of the [latest release](https://github.com/merschformann/gotz/releases/latest/) (look for `gotz_OS_ARCH`), rename it to `gotz` and put it in a folder in your `$PATH`.
+Simply download the binary of the [latest release](https://github.com/merschformann/gotz/releases/latest/) (look for `gotz_*_OS_ARCH` - darwin is macOS), unpack the `gotz` binary and put it in a folder in your `$PATH`.
 
 ## Usage
 
