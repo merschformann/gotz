@@ -1,0 +1,31 @@
+builds:
+  - env:
+      - CGO_ENABLED=0
+    goos:
+      - freebsd
+      - windows
+      - darwin
+      - linux
+    goarch:
+      - amd64
+      - arm
+      - arm64
+      - "386"
+    ldflags:
+      - -s -w -X main.version={{.Version}} -X main.commit={{.Commit}} -X main.date={{.Date}}
+checksum:
+  name_template: "checksums.txt"
+changelog:
+  use: github-native
+  sort: asc
+brews:
+  - name: gotz
+    homepage: "https://github.com/merschformann/gotz"
+    description: "A simple CLI timezone conversion assistant, written in Go"
+    repository:
+      owner: merschformann
+      name: gotz-brew
+      token: "{{ .Env.BREW_TOKEN }}"
+    commit_author:
+      name: merschbotmann
+      email: bot.merschformann@gmail.com
