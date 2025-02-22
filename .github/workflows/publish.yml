@@ -31,14 +31,3 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           BREW_TOKEN: ${{ secrets.BREW_BUMP_TOKEN }}
-
-  # homebrew:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Bump Homebrew formula
-  #       uses: dawidd6/action-homebrew-bump-formula@v3
-  #       with:
-  #         token: ${{secrets.BREW_BUMP_TOKEN}}
-  #         formula: gotz
-  #         user_name: merschbotmann
-  #         user_email: bot.merschformann@gmail.com
