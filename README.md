@@ -14,6 +14,13 @@ go install github.com/merschformann/gotz@latest
 
 Simply download the binary of the [latest release](https://github.com/merschformann/gotz/releases/latest/) (look for `gotz_*_OS_ARCH` - darwin is macOS), unpack the `gotz` binary and put it in a folder in your `$PATH`.
 
+### Homebrew
+
+```bash
+brew tap merschformann/gotz # only once
+brew install gotz
+```
+
 ## Usage
 
 Show current time:
