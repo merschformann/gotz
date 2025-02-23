@@ -24,7 +24,7 @@ brews:
     description: "A simple CLI timezone conversion assistant, written in Go"
     repository:
       owner: merschformann
-      name: gotz-brew
+      name: homebrew-gotz
       token: "{{ .Env.BREW_TOKEN }}"
     commit_author:
       name: merschbotmann
