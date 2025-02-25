@@ -330,15 +330,22 @@ func PlotTime(plt Plotter, cfg Config, t time.Time) error {
 
 // createTimeInfos creates the time info strings for all locations.
 func createTimeInfos(cfg Config, t time.Time) (timeInfos []string, times []*time.Location, err error) {
-	// Init
-	timeInfos = make([]string, len(cfg.Timezones)+1)
-
-	// Prepare timeZones to plot
+	// Sort timezones and convert
 	timeZones := make([]*time.Location, len(cfg.Timezones)+1)
 	descriptions := make([]string, len(cfg.Timezones)+1)
+	sortedTimeZones := sortLocations(cfg.Timezones, cfg.Sorting)
+
+	// Prepare timeZones to plot
 	timeZones[0] = time.Local
 	descriptions[0] = "Local"
-	for i, tz := range cfg.Timezones {
+	sortedZones := cfg.Timezones
+	switch cfg.Sorting {
+	case SortingModeOffset:
+		sortedZones = sortByOffset(cfg.Timezones)
+	case SortingModeName:
+		sortedZones = sortByName(cfg.Timezones)
+	}
+	for i, tz := range sortedZones {
 		// Get timezone
 		loc, err := time.LoadLocation(tz.TZ)
 		if err != nil {
@@ -350,6 +357,7 @@ func createTimeInfos(cfg Config, t time.Time) (timeInfos []string, times []*time
 	}
 	descriptionLength := maxStringLength(descriptions)
 
+	timeInfos = make([]string, len(cfg.Timezones)+1)
 	for i := range timeZones {
 		// Prepare location and time infos
 		timeInfo := fmt.Sprintf("%-*s", descriptionLength, descriptions[i])

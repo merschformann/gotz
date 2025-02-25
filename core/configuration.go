@@ -38,6 +38,9 @@ type Config struct {
 
 	// Indicates whether to continuously update.
 	Live bool `json:"live"`
+
+	// Defines the mode for sorting the timezones.
+	Sorting string `json:"sorting"`
 }
 
 // Location describes a timezone the user wants to display.

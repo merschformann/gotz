@@ -16,7 +16,7 @@ func ParseFlags(startConfig Config, appVersion string) (Config, time.Time, bool,
 	// Check for any changes
 	var changed bool
 	// Define configuration flags
-	var timezones, symbols, tics, stretch, inline, colorize, hours12, live string
+	var timezones, symbols, tics, stretch, inline, colorize, hours12, live, sorting string
 	flag.StringVar(
 		&timezones,
 		"timezones",
@@ -68,6 +68,15 @@ func ParseFlags(startConfig Config, appVersion string) (Config, time.Time, bool,
 		"live",
 		"",
 		"indicates whether to display time live (quit via 'q' or 'Ctrl+C') (one of: true, false)",
+	)
+	flag.StringVar(
+		&sorting,
+		"",
+		SortingModeDefault,
+		"indicates how to sort the timezones (one of: "+
+			SortingModeNone+", "+
+			SortingModeOffset+", "+
+			SortingModeName+")",
 	)
 
 	// Define direct flags
@@ -165,6 +174,13 @@ func ParseFlags(startConfig Config, appVersion string) (Config, time.Time, bool,
 		} else {
 			return startConfig, rt, changed, fmt.Errorf("invalid value for live: %s", live)
 		}
+	}
+	if sorting != "" {
+		changed = true
+		if isValidSortingMode(sorting) {
+			return startConfig, rt, changed, fmt.Errorf("invalid sorting mode: %s", sorting)
+		}
+		startConfig.Sorting = sorting
 	}
 
 	// Handle direct flags
