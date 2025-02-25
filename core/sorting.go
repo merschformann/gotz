@@ -1,6 +1,9 @@
 package core
 
-import "sort"
+import (
+	"sort"
+	"time"
+)
 
 // Define sorting modes
 const (
@@ -24,9 +27,33 @@ func isValidSortingMode(mode string) bool {
 	}
 }
 
-// sortByOffset sorts the given locations by their offset.
-func sortByOffset(locations []Location) {
+// locationContainer is a container for a location with additional information.
+type locationContainer struct {
+	location    *time.Location
+	description string
+	offset      int
+}
+
+// sortLocations sorts the given locations based on the given sorting mode.
+func sortLocations(locations []locationContainer, sortingMode string, localTop bool) {
 	sort.Slice(locations, func(i, j int) bool {
-		return locations[i].
+		// If the local timezone should be kept at the top, check if one of the
+		// locations is the local timezone.
+		if localTop {
+			if locations[i].location == time.Local {
+				return true
+			} else if locations[j].location == time.Local {
+				return false
+			}
+		}
+		// Sort based on the sorting mode
+		switch sortingMode {
+		case SortingModeOffset:
+			return locations[i].offset < locations[j].offset
+		case SortingModeName:
+			return locations[i].description < locations[j].description
+		default:
+			return i < j
+		}
 	})
 }

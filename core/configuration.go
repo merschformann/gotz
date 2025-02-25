@@ -41,6 +41,9 @@ type Config struct {
 
 	// Defines the mode for sorting the timezones.
 	Sorting string `json:"sorting"`
+	// SortLocalTop indicates whether the local timezone should be kept at the
+	// top (independent of the sorting mode).
+	SortLocalTop bool `json:"sort_local_top"`
 }
 
 // Location describes a timezone the user wants to display.
