@@ -171,7 +171,12 @@ The configuration is stored in `$XDG_CONFIG_HOME/gotz/config.json` (usually `~/.
     // Indicates whether to colorize the blocks
     "hours12": false,
     // Indicates whether to use 12-hour format
-    "live": false
+    "live": false,
+    // Selects the sorting of the timezones
+    // (one of 'name' - lexicographically, 'offset' - TZ offset, 'none' - user defined)
+    "sorting": "name",
+    // Indicates whether to keep the local timezone on top when using sorting
+    "sort_local_top": true
 }
 ```
 

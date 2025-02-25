@@ -16,7 +16,7 @@ func ParseFlags(startConfig Config, appVersion string) (Config, time.Time, bool,
 	// Check for any changes
 	var changed bool
 	// Define configuration flags
-	var timezones, symbols, tics, stretch, inline, colorize, hours12, live string
+	var timezones, symbols, tics, stretch, inline, colorize, hours12, live, sorting, sortLocalTop string
 	flag.StringVar(
 		&timezones,
 		"timezones",
@@ -68,6 +68,21 @@ func ParseFlags(startConfig Config, appVersion string) (Config, time.Time, bool,
 		"live",
 		"",
 		"indicates whether to display time live (quit via 'q' or 'Ctrl+C') (one of: true, false)",
+	)
+	flag.StringVar(
+		&sorting,
+		"sorting",
+		SortingModeDefault,
+		"indicates how to sort the timezones (one of: "+
+			SortingModeNone+", "+
+			SortingModeOffset+", "+
+			SortingModeName+")",
+	)
+	flag.StringVar(
+		&sortLocalTop,
+		"sort-local-top",
+		"",
+		"indicates whether to keep the local timezone at the top (one of: true, false)",
 	)
 
 	// Define direct flags
@@ -164,6 +179,23 @@ func ParseFlags(startConfig Config, appVersion string) (Config, time.Time, bool,
 			startConfig.Live = false
 		} else {
 			return startConfig, rt, changed, fmt.Errorf("invalid value for live: %s", live)
+		}
+	}
+	if sorting != "" {
+		changed = true
+		if !isValidSortingMode(sorting) {
+			return startConfig, rt, changed, fmt.Errorf("invalid sorting mode: %s", sorting)
+		}
+		startConfig.Sorting = sorting
+	}
+	if sortLocalTop != "" {
+		changed = true
+		if strings.ToLower(sortLocalTop) == "true" {
+			startConfig.SortLocalTop = true
+		} else if strings.ToLower(sortLocalTop) == "false" {
+			startConfig.SortLocalTop = false
+		} else {
+			return startConfig, rt, changed, fmt.Errorf("invalid value for sort-local-top: %s", sortLocalTop)
 		}
 	}
 

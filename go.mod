@@ -1,6 +1,6 @@
 module github.com/merschformann/gotz
 
-go 1.17
+go 1.23.0
 
 require (
 	github.com/adrg/xdg v0.4.0
