@@ -329,36 +329,58 @@ func PlotTime(plt Plotter, cfg Config, t time.Time) error {
 }
 
 // createTimeInfos creates the time info strings for all locations.
-func createTimeInfos(cfg Config, t time.Time) (timeInfos []string, times []*time.Location, err error) {
-	// Init
-	timeInfos = make([]string, len(cfg.Timezones)+1)
-
-	// Prepare timeZones to plot
-	timeZones := make([]*time.Location, len(cfg.Timezones)+1)
-	descriptions := make([]string, len(cfg.Timezones)+1)
-	timeZones[0] = time.Local
-	descriptions[0] = "Local"
+func createTimeInfos(cfg Config, t time.Time) (timeInfos []string, timeZones []*time.Location, err error) {
+	// Prepare timezones for plotting
+	locations := make([]locationContainer, len(cfg.Timezones)+1)
+	now := time.Now()
+	_, localOffset := now.In(time.Local).Zone()
+	locations[0] = locationContainer{
+		location:    time.Local,
+		description: "Local",
+		offset:      localOffset,
+	}
 	for i, tz := range cfg.Timezones {
 		// Get timezone
 		loc, err := time.LoadLocation(tz.TZ)
 		if err != nil {
 			return nil, nil, fmt.Errorf("error loading timezone %s: %s", tz.TZ, err)
 		}
+		_, offset := now.In(loc).Zone()
 		// Store timezone
-		timeZones[i+1] = loc
-		descriptions[i+1] = tz.Name
+		locations[i+1] = locationContainer{
+			location:    loc,
+			description: tz.Name,
+			offset:      offset,
+		}
 	}
-	descriptionLength := maxStringLength(descriptions)
 
-	for i := range timeZones {
+	// Sort timezones and convert
+	if cfg.Sorting != SortingModeNone {
+		sortLocations(locations, cfg.Sorting, cfg.SortLocalTop)
+	}
+
+	// Determine max description length
+	descriptionLength := 0
+	for _, location := range locations {
+		if len(location.description) > descriptionLength {
+			descriptionLength = len(location.description)
+		}
+	}
+
+	timeInfos = make([]string, len(cfg.Timezones)+1)
+	timeZones = make([]*time.Location, len(cfg.Timezones)+1)
+	for i, location := range locations {
 		// Prepare location and time infos
-		timeInfo := fmt.Sprintf("%-*s", descriptionLength, descriptions[i])
+		timeInfo := fmt.Sprintf("%-*s", descriptionLength, location.description)
 		timeInfo = fmt.Sprintf(
 			"%s: %s %s",
 			timeInfo,
-			formatDay(cfg.Hours12, t.In(timeZones[i])),
-			formatTime(cfg.Hours12, true, t.In(timeZones[i])))
+			formatDay(cfg.Hours12, t.In(location.location)),
+			formatTime(cfg.Hours12, true, t.In(location.location)),
+		)
+		// Store time info and timezone
 		timeInfos[i] = timeInfo
+		timeZones[i] = location.location
 	}
 
 	return timeInfos, timeZones, nil
