@@ -37,7 +37,7 @@ Show arbitrary time:
 gotz 21
 ```
 
-![preview](material/screenshot/gotz-15.png)
+![preview](material/screenshot/gotz-15-1.png)
 
 Show arbitrary time using different timezone (index based):
 
@@ -46,6 +46,14 @@ gotz 15@2
 ```
 
 ![preview](material/screenshot/gotz-15-2.png)
+
+Show arbitrary time using different timezone (explicit TZ code):
+
+```bash
+gotz 15@Asia/Tokyo
+```
+
+![preview](material/screenshot/gotz-15-3.png)
 
 Time can be one of the following formats:
 
