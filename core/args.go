@@ -202,7 +202,7 @@ func ParseFlags(startConfig Config, appVersion string) (Config, time.Time, bool,
 	// Handle direct flags
 	if requestTime != "" {
 		// Parse time
-		rTime, err := parseRequestTime(startConfig, requestTime)
+		rTime, err := ParseRequestTime(startConfig, requestTime)
 		if err != nil {
 			return startConfig, rt, changed, err
 		}
@@ -216,7 +216,7 @@ func ParseFlags(startConfig Config, appVersion string) (Config, time.Time, bool,
 		// If last argument is a time, parse it
 		if len(lastArg) > 0 && lastArg[0] >= '0' && lastArg[0] <= '9' {
 			// Parse time
-			rTime, err := parseRequestTime(startConfig, lastArg)
+			rTime, err := ParseRequestTime(startConfig, lastArg)
 			if err != nil {
 				return startConfig, rt, changed, err
 			}
@@ -279,9 +279,9 @@ type inputTimeFormat struct {
 	TZInfo bool
 }
 
-// parseRequestTime parses a requested time in various formats. Furthermore, it
+// ParseRequestTime parses a requested time in various formats. Furthermore, it
 // reads an optional timezone index and uses its timezone instead of local.
-func parseRequestTime(config Config, t string) (time.Time, error) {
+func ParseRequestTime(config Config, t string) (time.Time, error) {
 	tzSeparator := "@"
 	tz := time.Local
 	// Check whether a different time zone than the local one was specified.
@@ -289,26 +289,36 @@ func parseRequestTime(config Config, t string) (time.Time, error) {
 		// Split time and timezone
 		parts := strings.Split(t, tzSeparator)
 		if len(parts) != 2 {
-			return time.Time{}, fmt.Errorf("invalid time format: %s (should be <timezone-index>/<time>)", t)
+			return time.Time{}, fmt.Errorf("invalid time format: %s (should be <time>@<timezone-index> or <time>@<timezone-identifier>)", t)
 		}
-		// Parse timezone index
-		tzIndex, err := strconv.Atoi(parts[1])
-		if err != nil {
-			return time.Time{}, fmt.Errorf("invalid time format: %s (should be <timezone-index>/<time>)", t)
-		}
-		if tzIndex < 0 || tzIndex > len(config.Timezones) {
-			return time.Time{}, fmt.Errorf("invalid time format: %s (timezone-index out of range)", t)
-		}
-		t = parts[0]
-		// Get timezone at index (offset by one to account for 0 as local timezone)
-		if tzIndex > 0 {
-			tz, err = time.LoadLocation(config.Timezones[tzIndex-1].TZ)
+		if checkTimezoneLocation(parts[1]) {
+			// >>> Handle the explicitly given timezone
+			explicitTZ, err := time.LoadLocation(parts[1])
+			if err == nil {
+				// Use explicit timezone
+				tz = explicitTZ
+			}
+		} else {
+			// >>> Handle the timezone index referring to the configured TZs
+			tzIndex, err := strconv.Atoi(parts[1])
 			if err != nil {
-				return time.Time{}, fmt.Errorf("invalid timezone: %s (given index %d)",
-					config.Timezones[tzIndex-1].TZ,
-					tzIndex)
+				return time.Time{}, fmt.Errorf("invalid time format: %s (should be <time>@<timezone-index> or <time>@<timezone-identifier>)", t)
+			}
+			if tzIndex < 0 || tzIndex > len(config.Timezones) {
+				return time.Time{}, fmt.Errorf("invalid time format: %s (timezone-index out of range)", t)
+			}
+			// Get timezone at index (offset by one to account for 0 as local timezone)
+			if tzIndex > 0 {
+				tz, err = time.LoadLocation(config.Timezones[tzIndex-1].TZ)
+				if err != nil {
+					return time.Time{}, fmt.Errorf("invalid timezone: %s (given index %d)",
+						config.Timezones[tzIndex-1].TZ,
+						tzIndex)
+				}
 			}
 		}
+		// Keep time element
+		t = parts[0]
 	}
 	// Parse time
 	rt, err := parseTime(t, tz)
