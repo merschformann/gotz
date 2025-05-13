@@ -34,7 +34,7 @@ gotz
 Show arbitrary time:
 
 ```bash
-gotz 21
+gotz 15
 ```
 
 ![preview](material/screenshot/gotz-15-1.png)
