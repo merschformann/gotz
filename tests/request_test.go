@@ -44,7 +44,7 @@ func TestParseRequest(t *testing.T) {
 			// Check if the parsed time matches the expected time (ignore the
 			// date)
 			if parsedTime.Hour() != test.expected.Hour() || parsedTime.Minute() != test.expected.Minute() {
-				t.Errorf("Expected %v, got %v", test.expected, t)
+				t.Errorf("Expected %v, got %v", test.expected, parsedTime)
 			}
 			// Check if the timezone matches the expected timezone
 			if parsedTime.Location().String() != test.expected.Location().String() {
