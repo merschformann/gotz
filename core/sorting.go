@@ -17,8 +17,8 @@ const (
 	SortingModeDefault = SortingModeNone
 )
 
-// isValidSortingMode checks if the given sorting mode is defined and valid.
-func isValidSortingMode(mode string) bool {
+// IsValidSortingMode checks if the given sorting mode is defined and valid.
+func IsValidSortingMode(mode string) bool {
 	switch mode {
 	case SortingModeNone, SortingModeOffset, SortingModeName:
 		return true

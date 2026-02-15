@@ -161,8 +161,8 @@ var (
 	}
 )
 
-// checkSymbolMode checks if the given symbol mode is valid.
-func checkSymbolMode(mode string) error {
+// CheckSymbolMode checks if the given symbol mode is valid.
+func CheckSymbolMode(mode string) error {
 	switch mode {
 	case SymbolModeRectangles, SymbolModeSunMoon, SymbolModeMono, SymbolModeBlocks, SymbolModeCustom:
 		return nil

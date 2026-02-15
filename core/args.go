@@ -107,7 +107,7 @@ func ParseFlags(startConfig Config, appVersion string) (Config, time.Time, bool,
 	// Handle configuration
 	if timezones != "" {
 		changed = true
-		tzs, err := parseTimezones(timezones)
+		tzs, err := ParseTimezones(timezones)
 		if err != nil {
 			return startConfig, rt, changed, err
 		}
@@ -116,7 +116,7 @@ func ParseFlags(startConfig Config, appVersion string) (Config, time.Time, bool,
 	if symbols != "" {
 		changed = true
 		startConfig.Style.Symbols = symbols
-		symbolError := checkSymbolMode(startConfig.Style.Symbols)
+		symbolError := CheckSymbolMode(startConfig.Style.Symbols)
 		if symbolError != nil {
 			return startConfig, rt, changed, symbolError
 		}
@@ -183,7 +183,7 @@ func ParseFlags(startConfig Config, appVersion string) (Config, time.Time, bool,
 	}
 	if sorting != "" {
 		changed = true
-		if !isValidSortingMode(sorting) {
+		if !IsValidSortingMode(sorting) {
 			return startConfig, rt, changed, fmt.Errorf("invalid sorting mode: %s", sorting)
 		}
 		startConfig.Sorting = sorting
@@ -227,8 +227,8 @@ func ParseFlags(startConfig Config, appVersion string) (Config, time.Time, bool,
 	return startConfig, rt, changed, nil
 }
 
-// parseTimezones parses a comma-separated list of timezones.
-func parseTimezones(timezones string) ([]Location, error) {
+// ParseTimezones parses a comma-separated list of timezones.
+func ParseTimezones(timezones string) ([]Location, error) {
 	var timezoneList []Location
 	for _, timezone := range strings.Split(timezones, ",") {
 		// Skip empty timezones
