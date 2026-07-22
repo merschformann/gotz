@@ -69,15 +69,17 @@ Time can be one of the following formats:
 2006-01-02T15:04:05
 ```
 
-Use live mode to continuously update the time (exit via _q_, _esc_ or _ctrl+c_). Activate once via:
+Boolean flags toggle features on (`--flag`) or off (`--flag=false`). This is useful for temporarily overriding settings from your persistent config.
+
+Use live mode to continuously update the time (exit via _q_, _esc_ or _ctrl+c_). Activate via:
 
 ```bash
-gotz --live true
+gotz --live
 ```
 
 ![preview](material/screenshot/gotz-live.png)
 
-(above also uses option `--inline false`; for styling see customization below)
+(above also uses option `--inline=false`; for styling see customization below)
 
 ## Basic configuration
 
@@ -92,7 +94,7 @@ gotz --timezones "Office:America/New_York,Home:Europe/Berlin"
 Set 12-hour format:
 
 ```bash
-gotz --hours12 true
+gotz --hours12
 ```
 
 ## Customization
@@ -176,9 +178,9 @@ The configuration is stored in `$XDG_CONFIG_HOME/gotz/config.json` (usually `~/.
     "stretch": true,
     // Inline indicates whether location and time info will be plotted on one line with the bars.
     "inline": true,
-    // Indicates whether to colorize the blocks
-    "hours12": false,
     // Indicates whether to use 12-hour format
+    "hours12": false,
+    // Indicates whether to display time live (quit via 'q' or 'Ctrl+C')
     "live": false,
     // Selects the sorting of the timezones
     // (one of 'name' - lexicographically, 'offset' - TZ offset, 'none' - user defined)

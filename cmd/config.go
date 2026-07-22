@@ -12,6 +12,11 @@ import (
 var configCmd = &cobra.Command{
 	Use:   "config",
 	Short: "View or edit persistent configuration",
+	Long: `View or edit the persistent configuration stored in $XDG_CONFIG_HOME/gotz/config.json.
+
+Boolean flags: use --flag to enable, --flag=false to disable the setting.
+For example: gotz config --live       enables live mode permanently
+             gotz config --live=false disables live mode permanently`,
 	Run: func(cmd *cobra.Command, args []string) {
 		cfg, err := core.Load()
 		if err != nil {
@@ -49,29 +54,30 @@ var configCmd = &cobra.Command{
 			cfg.Style.Symbols = flagSymbols
 			changed = true
 		}
-		// Bool-like flags
-		applyBool := func(name string, target *bool, val string) {
-			if !cmd.Flags().Changed(name) {
-				return
-			}
-			if val == "true" {
-				*target = true
-			} else if val == "false" {
-				*target = false
-			} else {
-				fmt.Printf("invalid value for %s: %s\n", name, val)
-				os.Exit(1)
-			}
+		if cmd.Flags().Changed("tics") {
+			cfg.Tics = flagTics
 			changed = true
 		}
-
-		applyBool("tics", &cfg.Tics, flagTics)
-		applyBool("stretch", &cfg.Stretch, flagStretch)
-		applyBool("inline", &cfg.Inline, flagInline)
-		applyBool("colorize", &cfg.Style.Colorize, flagColorize)
-		applyBool("hours12", &cfg.Hours12, flagHours12)
-		applyBool("live", &cfg.Live, flagLive)
-
+		if cmd.Flags().Changed("stretch") {
+			cfg.Stretch = flagStretch
+			changed = true
+		}
+		if cmd.Flags().Changed("inline") {
+			cfg.Inline = flagInline
+			changed = true
+		}
+		if cmd.Flags().Changed("colorize") {
+			cfg.Style.Colorize = flagColorize
+			changed = true
+		}
+		if cmd.Flags().Changed("hours12") {
+			cfg.Hours12 = flagHours12
+			changed = true
+		}
+		if cmd.Flags().Changed("live") {
+			cfg.Live = flagLive
+			changed = true
+		}
 		if cmd.Flags().Changed("sorting") {
 			if !core.IsValidSortingMode(flagSorting) {
 				fmt.Println("invalid sorting mode:", flagSorting)
@@ -81,14 +87,7 @@ var configCmd = &cobra.Command{
 			changed = true
 		}
 		if cmd.Flags().Changed("sort-local-top") {
-			if flagSortLocal == "true" {
-				cfg.SortLocalTop = true
-			} else if flagSortLocal == "false" {
-				cfg.SortLocalTop = false
-			} else {
-				fmt.Println("invalid value for sort-local-top:", flagSortLocal)
-				os.Exit(1)
-			}
+			cfg.SortLocalTop = flagSortLocal
 			changed = true
 		}
 
@@ -108,15 +107,14 @@ var configCmd = &cobra.Command{
 }
 
 func init() {
-	// Reuse the same flags as root to keep UX consistent
 	configCmd.Flags().StringVarP(&flagTimezones, "timezones", "t", "", "timezones to display, comma-separated")
 	configCmd.Flags().StringVarP(&flagSymbols, "symbols", "s", "", "symbols to use for time blocks")
-	configCmd.Flags().StringVar(&flagTics, "tics", "", "true/false")
-	configCmd.Flags().StringVar(&flagStretch, "stretch", "", "true/false")
-	configCmd.Flags().StringVar(&flagInline, "inline", "", "true/false")
-	configCmd.Flags().StringVar(&flagColorize, "colorize", "", "true/false")
-	configCmd.Flags().StringVar(&flagHours12, "hours12", "", "true/false")
-	configCmd.Flags().StringVar(&flagLive, "live", "", "true/false")
-	configCmd.Flags().StringVar(&flagSorting, "sorting", "", "sorting mode")
-	configCmd.Flags().StringVar(&flagSortLocal, "sort-local-top", "", "true/false")
+	configCmd.Flags().BoolVar(&flagTics, "tics", false, "whether to use local time tics on the time axis")
+	configCmd.Flags().BoolVar(&flagStretch, "stretch", false, "whether to stretch across the terminal width")
+	configCmd.Flags().BoolVar(&flagInline, "inline", false, "whether to display time info and bars in one line")
+	configCmd.Flags().BoolVar(&flagColorize, "colorize", false, "whether to colorize the symbols")
+	configCmd.Flags().BoolVar(&flagHours12, "hours12", false, "whether to use 12-hour clock")
+	configCmd.Flags().BoolVar(&flagLive, "live", false, "whether to display time live (quit via 'q' or 'Ctrl+C')")
+	configCmd.Flags().StringVar(&flagSorting, "sorting", "", "indicates how to sort the timezones")
+	configCmd.Flags().BoolVar(&flagSortLocal, "sort-local-top", false, "whether to keep the local timezone at the top")
 }
